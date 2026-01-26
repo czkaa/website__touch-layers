@@ -136,6 +136,12 @@ const mergedStyle = computed(() => ({
 </script>
 
 <style>
+:root {
+  --top-angle: -60deg;
+  --side-angle: -30deg;
+  --side-depth-multiplier: 1.7;
+}
+
 /* TOP */
 .top {
   position: absolute;
@@ -144,7 +150,7 @@ const mergedStyle = computed(() => ({
   background: #4c4c4c;
   width: calc(100% + 1px);
   height: var(--depth);
-  transform: translateY(-100%) skewX(-45deg);
+  transform: translateY(-100%) skewX(var(--top-angle));
   transform-origin: left bottom;
   opacity: 0.5;
   border-top: 0.5px solid rgba(255, 255, 255, 1);
@@ -159,7 +165,7 @@ const mergedStyle = computed(() => ({
   background: #4c4c4c;
   width: calc(100% + 1px);
   height: var(--depth);
-  transform: translateY(-100%) skewX(-45deg);
+  transform: translateY(-100%) skewX(var(--top-angle));
   transform-origin: left bottom;
   opacity: 0.5;
   border-bottom: 0.5px solid rgba(255, 255, 255, 1);
@@ -168,12 +174,12 @@ const mergedStyle = computed(() => ({
 /* SIDE */
 .side {
   position: absolute;
+  top: 0;
   right: 0;
-  top: var(--depth);
-  width: var(--depth);
-  height: calc(100% + 1px);
-  transform: skewY(-45deg) translateX(100%);
-  transform-origin: left top;
+  width: calc(var(--depth) * var(--side-depth-multiplier));
+  height: 100%;
+  transform: skewY(var(--side-angle)) translateX(100%);
+  transform-origin: right top;
   opacity: 0.5;
   background: #242424;
   border-bottom: 0.5px solid rgba(255, 255, 255, 1);
