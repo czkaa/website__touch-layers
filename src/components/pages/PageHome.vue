@@ -1,16 +1,7 @@
 <template>
-  <main class="timeline-root">
+  <main class="w-frame-w h-frame-h">
     <TimelineStage />
   </main>
 </template>
 
 <script setup></script>
-
-<style scoped>
-.timeline-root {
-  width: 100vw;
-  height: 100vh;
-  padding: 0;
-  margin: 0;
-}
-</style>

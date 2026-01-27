@@ -1,5 +1,5 @@
 <template>
-  <div class="absolute z-[3]" :style="style">
+  <div class="absolute" :style="style">
     <div
       class="absolute left-[calc(var(--depth)/2)] w-1 h-[calc(100%-var(--depth)/4)] bg-pole rounded-b-[10rem]"
     ></div>

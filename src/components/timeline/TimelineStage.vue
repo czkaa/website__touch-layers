@@ -1,6 +1,6 @@
 <template>
   <div
-    class="timeline-stage pt-depth"
+    class="timeline-stage pt-depth aspect-[0.5]w-full h-full"
     :class="{ 'is-zoomed': isZoomed }"
     ref="stageRef"
     @click="resetZoom"
@@ -231,9 +231,6 @@ const handlePointerUp = (event) => {
 <style scoped>
 .timeline-stage {
   position: relative;
-  width: 100%;
-  height: 100%;
-
   touch-action: pan-y pinch-zoom;
 }
 

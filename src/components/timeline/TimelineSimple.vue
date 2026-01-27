@@ -1,20 +1,18 @@
 <template>
-  <section class="relative h-full min-h-frame-h">
-    <div class="w-full h-full">
-      <div class="relative w-3/4 h-full mx-28">
-        <TimelineNoVisit
-          v-for="gap in layout.noVisits"
-          :key="gap.id"
-          :style="gap.style"
-        />
-        <TimelineVisit
-          v-for="visit in layout.visits"
-          :key="visit.id"
-          :id="visit.visitId"
-          :style="visit.style"
-          :is-continuation="visit.isContinuation"
-          :is-last-segment="visit.isLastSegment"
-          @click.stop="handleSelect(visit)"
+  <section class="relative h-full min-h-frame-h px-20">
+    <div class="h-full flex flex-col">
+      <div
+        class="relative h-full mr-[calc(var(--depth)*var(--side-depth-multiplier))] timeline-inner"
+      >
+        <component
+          v-for="item in layout.items"
+          :is="item.type === 'visit' ? TimelineVisit : TimelineNoVisit"
+          :key="item.id"
+          :id="item.type === 'visit' ? item.visitId : undefined"
+          :style="item.style"
+          :is-continuation="item.type === 'visit' ? item.isContinuation : false"
+          :is-last-segment="item.type === 'visit' ? item.isLastSegment : false"
+          @click.stop="item.type === 'visit' && handleSelect(item)"
         />
       </div>
 
@@ -120,6 +118,7 @@ const layout = computed(() => {
         const duration = Math.max(endRatio - startRatio, 0);
         noVisits.push({
           id: `gap-${segStart}`,
+          segStart,
           style: {
             bottom: `${startRatio * 100}%`,
             height: `${duration * 100}%`,
@@ -150,6 +149,7 @@ const layout = computed(() => {
         visitId: visit.id,
         isContinuation: prev?.segEnd === segStart,
         segEnd,
+        segStart,
         hourStartMs: new Date((segStart + segEnd) / 2).setMinutes(0, 0, 0),
         centerRatio: (startRatio + endRatio) / 2,
         style: {
@@ -176,7 +176,13 @@ const layout = computed(() => {
       segment.segEnd === maxEndByVisit.get(segment.visitId);
   });
 
+  const items = [
+    ...segments.map((segment) => ({ ...segment, type: 'visit' })),
+    ...noVisits.map((gap) => ({ ...gap, type: 'gap' })),
+  ].sort((a, b) => (a.segStart ?? 0) - (b.segStart ?? 0));
+
   return {
+    items,
     visits: segments,
     noVisits,
     hours: activeHours.map((t, index) => {
@@ -216,9 +222,4 @@ const handleSelect = (segment) => {
 };
 </script>
 
-<style scoped>
-.timeline-inner {
-  position: absolute;
-  inset: 0rem;
-}
-</style>
+<style scoped></style>

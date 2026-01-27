@@ -1,6 +1,6 @@
 <template>
   <article class="absolute front element" :style="mergedStyle">
-    <div class="bottom element -z-10" v-if="!isContinuation"></div>
+    <div class="bottom element" v-if="!isContinuation"></div>
     <div
       class="opacity-70 w-full h-full front overflow-hidden border-x-[0.5px] border-white bg-[rgba(50,50,50,1)]"
       :class="{
@@ -162,12 +162,12 @@ const mergedStyle = computed(() => ({
   position: absolute;
   top: 100%;
   left: -1px;
-  background: #4c4c4c;
+  background: #2d2d2d;
   width: calc(100% + 1px);
   height: var(--depth);
   transform: translateY(-100%) skewX(var(--top-angle));
   transform-origin: left bottom;
-  opacity: 0.5;
+  opacity: 1;
   border-bottom: 0.5px solid rgba(255, 255, 255, 1);
 }
 
