@@ -1,7 +1,9 @@
 <template>
   <main class="w-frame-w h-frame-h">
-    <TimelineStage />
+    <TimelineStage :time-slots="timeSlots" />
   </main>
 </template>
 
-<script setup></script>
+<script setup>
+import { timeSlots } from '../timeline/store/visits';
+</script>

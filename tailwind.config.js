@@ -88,7 +88,7 @@ module.exports = {
         'dot-move': 'dotMove 2s infinite alternate',
       },
       backgroundImage: {
-        pole: 'linear-gradient(90deg, rgb(100 100 100) 0%, rgb(163 163 163) 17%, rgba(191, 191, 191, 1) 39%, rgb(104 104 104) 79%, rgba(230, 230, 230, 1) 100%, rgba(100, 100, 100, 1) 100%)',
+        pole: 'linear-gradient(90deg, rgb(80 80 80) 0%, rgb(163 163 163) 17%, rgba(200,200,200, 1) 39%, rgb(104 104 104) 79%, rgba(230, 230, 230, 1) 100%, rgba(80,80,80, 1) 100%)',
       },
       keyframes: {
         blink: {

@@ -3,7 +3,7 @@
     class="timeline-stage pt-depth aspect-[0.5]w-full h-full"
     :class="{ 'is-zoomed': isZoomed }"
     ref="stageRef"
-    @click="resetZoom"
+    @click="handleStageClick"
     @wheel="handleWheel"
     @pointerdown="handlePointerDown"
     @pointermove="handlePointerMove"
@@ -20,6 +20,7 @@
       ]"
     >
       <TimelineSimple
+        :time-slots="timeSlots"
         :show-subdivisions="isZoomed"
         :focus-hour-key="focusedHourKey"
         @select="handleSelect"
@@ -31,9 +32,17 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import debounce from 'lodash.debounce';
+import { timeSlots as defaultTimeSlots } from './store/visits';
+
+defineProps({
+  timeSlots: {
+    type: Array,
+    default: () => defaultTimeSlots,
+  },
+});
 
 const selectedId = ref(null);
-const ZOOM_LEVELS = [1, 4];
+const ZOOM_LEVELS = [1, 15];
 const zoomScale = ref(1);
 const zoomTranslatePx = ref(0);
 const focusedHourKey = ref(null);
@@ -57,6 +66,13 @@ const resetZoom = () => {
   zoomScale.value = 1;
   zoomTranslatePx.value = 0;
   focusedHourKey.value = null;
+};
+
+const handleStageClick = (event) => {
+  if (event?.target?.closest?.('[data-visit]')) {
+    return;
+  }
+  resetZoom();
 };
 
 const setTranslateForCenterRatio = (ratio) => {
@@ -84,7 +100,22 @@ watch(
   { flush: 'post' },
 );
 
-const handleSelect = (segment) => {
+const getCenterRatioFromEvent = (event) => {
+  if (!event?.currentTarget || !stageRef.value) {
+    return null;
+  }
+  const stageRect = stageRef.value.getBoundingClientRect();
+  const targetRect = event.currentTarget.getBoundingClientRect();
+  const centerY = targetRect.top + targetRect.height / 2 - stageRect.top;
+  if (!Number.isFinite(centerY) || stageRect.height <= 0) {
+    return null;
+  }
+  return 1 - centerY / stageRect.height;
+};
+
+const handleSelect = (payload) => {
+  const segment = payload?.segment ?? payload;
+  const event = payload?.event;
   const targetId = segment.visitId || segment.id;
   if (selectedId.value === targetId) {
     resetZoom();
@@ -92,12 +123,15 @@ const handleSelect = (segment) => {
   }
 
   const scale = ZOOM_LEVELS[1];
-  const centerRatio = segment.centerRatio ?? 0.5;
+  const centerFromClick = getCenterRatioFromEvent(event);
+  const baseCenter = centerFromClick ?? segment.centerRatio ?? 0.5;
+  const biasedCenter = baseCenter + 0.05;
+  const clampedCenter = clamp(biasedCenter, 0.08, 0.92);
 
   selectedId.value = targetId;
   zoomScale.value = scale;
   focusedHourKey.value = segment.hourStartMs ?? null;
-  pendingCenterRatio.value = centerRatio;
+  pendingCenterRatio.value = clampedCenter;
 };
 
 const zoomStyle = computed(() => ({

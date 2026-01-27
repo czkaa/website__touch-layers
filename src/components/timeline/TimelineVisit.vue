@@ -1,6 +1,10 @@
 <template>
-  <article class="absolute front element" :style="mergedStyle">
-    <div class="bottom element" v-if="!isContinuation"></div>
+  <article
+    class="absolute front element transition-[height] duration-200 linear"
+    :style="mergedStyle"
+    data-visit="true"
+  >
+    <div class="bottom element opacity-25" v-if="!isContinuation"></div>
     <div
       class="opacity-70 w-full h-full front overflow-hidden border-x-[0.5px] border-white bg-[rgba(50,50,50,1)]"
       :class="{
@@ -8,7 +12,7 @@
         'border-t-[0.5px] ': isLastSegment,
       }"
     >
-      <div :style="frontStyle" class="w-[70vw] h-[80vh]"></div>
+      <div :style="frontStyle" class="w-[75vw] h-[80vh]"></div>
     </div>
     <div
       class="top element relative overflow-hidden"
@@ -124,7 +128,7 @@ const topStyle = computed(() => {
   const { radial } = gradientsForId(props.id);
   return {
     backgroundPositionY: '-10%',
-    backgroundSize: '75vw auto',
+    backgroundSize: '80vw auto',
     backgroundRepeat: 'no-repeat',
     backgroundImage: `${radial}`,
   };
@@ -167,7 +171,6 @@ const mergedStyle = computed(() => ({
   height: var(--depth);
   transform: translateY(-100%) skewX(var(--top-angle));
   transform-origin: left bottom;
-  opacity: 1;
   border-bottom: 0.5px solid rgba(255, 255, 255, 1);
 }
 
