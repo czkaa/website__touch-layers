@@ -26,6 +26,8 @@ const ensureSessionId = () => {
   return id;
 };
 
+const getSessionId = () => sessionStorage.getItem('visitor-session-id');
+
 const sendRaw = (payload) => {
   const message = JSON.stringify(payload);
   if (ws && ws.readyState === WebSocket.OPEN) {
@@ -114,4 +116,5 @@ export const useVisitorSocket = () => ({
   sendEnter,
   sendLeave,
   disconnect,
+  getSessionId,
 });

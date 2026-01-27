@@ -4,16 +4,18 @@
       <div
         class="relative h-full mr-[calc(var(--depth)*var(--side-depth-multiplier))] timeline-inner"
       >
-        <component
-          v-for="item in layout.items"
-          :is="item.type === 'visit' ? TimelineVisit : TimelineNoVisit"
-          :key="item.id"
-          :id="item.type === 'visit' ? item.visitId : undefined"
-          :style="item.style"
-          :is-continuation="item.type === 'visit' ? item.isContinuation : false"
-          :is-last-segment="item.type === 'visit' ? item.isLastSegment : false"
-          @click.stop="item.type === 'visit' && handleSelect(item, $event)"
-        />
+        <template v-for="item in layout.items" :key="item.id">
+          <TimelineVisit
+            v-if="item.type === 'visit'"
+            :id="item.visitId"
+            :style="item.style"
+            :is-continuation="item.isContinuation"
+            :is-last-segment="item.isLastSegment"
+            :is-highlight="item.visitId === highlightVisitId"
+            @click.stop="handleSelect(item, $event)"
+          />
+          <TimelineNoVisit v-else :style="item.style" />
+        </template>
       </div>
 
       <TimelineBackground
@@ -47,6 +49,10 @@ const props = defineProps({
   },
   focusHourKey: {
     type: Number,
+    default: null,
+  },
+  highlightVisitId: {
+    type: String,
     default: null,
   },
 });

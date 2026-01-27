@@ -21,6 +21,7 @@
     >
       <TimelineSimple
         :time-slots="timeSlots"
+        :highlight-visit-id="highlightVisitId"
         :show-subdivisions="isZoomed"
         :focus-hour-key="focusedHourKey"
         @select="handleSelect"
@@ -38,6 +39,10 @@ defineProps({
   timeSlots: {
     type: Array,
     default: () => defaultTimeSlots,
+  },
+  highlightVisitId: {
+    type: String,
+    default: null,
   },
 });
 

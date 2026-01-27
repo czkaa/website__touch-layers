@@ -2,14 +2,14 @@
   <div :key="hour.id" class="hour-block z-50 flex-1 sticky top-0">
     <div
       :class="[hour.dateLabel ? 'w-full' : 'w-10']"
-      class="h-[2px] bg-primary absolute top-0 right-0 rounded-full"
+      class="h-[2px] bg-primary absolute bottom-0 right-0 rounded-full"
     ></div>
 
     <div
-      class="w-10 h-[2px] bg-primary absolute top-0 left-0 rounded-full"
+      class="w-10 h-[2px] bg-primary absolute bottom-0 left-0 rounded-full"
     ></div>
 
-    <label class="sticky left-0 top-0 text-primary z-50">
+    <label class="absolute bottom-0 text-primary z-50">
       <span v-if="hour.dateLabel" class="text-md">
         {{ hour.dateLabel }}
       </span>

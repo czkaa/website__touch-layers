@@ -7,10 +7,12 @@
     <div class="bottom element opacity-25" v-if="!isContinuation"></div>
     <div
       class="opacity-70 w-full h-full front overflow-hidden border-x-[0.5px] border-white bg-[rgba(50,50,50,1)]"
-      :class="{
-        'border-b-[0.5px] ': !isContinuation,
-        'border-t-[0.5px] ': isLastSegment,
-      }"
+      :class="[
+        {
+          'border-b-[0.5px] ': !isContinuation,
+          'border-t-[0.5px] ': isLastSegment,
+        },
+      ]"
     >
       <div :style="frontStyle" class="w-[75vw] h-[80vh]"></div>
     </div>
@@ -25,6 +27,7 @@
 
 <script setup>
 import { computed, onBeforeMount } from 'vue';
+import { useRoute } from 'vue-router';
 
 const props = defineProps({
   id: {
@@ -43,7 +46,17 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  isHighlight: {
+    type: Boolean,
+    default: null,
+  },
 });
+
+const route = useRoute();
+console.log('ROUTE', route);
+const isNotColored = computed(
+  () => !props.isHighlight && route.name === 'visitor',
+);
 
 const palette = [
   ['#ff7e5b', '#ffd666'],
@@ -118,7 +131,7 @@ onBeforeMount(() => {
 const frontStyle = computed(() => {
   const { linear } = gradientsForId(props.id);
   return {
-    backgroundImage: `${linear}`,
+    backgroundImage: isNotColored.value ? 'none' : `${linear}`,
     backgroundAttachment: 'fixed',
     transform: `translateX(-${props.style.left})`,
   };
@@ -130,7 +143,7 @@ const topStyle = computed(() => {
     backgroundPositionY: '-10%',
     backgroundSize: '80vw auto',
     backgroundRepeat: 'no-repeat',
-    backgroundImage: `${radial}`,
+    backgroundImage: isNotColored.value ? 'none' : `${radial}`,
   };
 });
 
