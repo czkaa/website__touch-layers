@@ -43,6 +43,25 @@ const flushPending = () => {
   }
 };
 
+const getClientMeta = () => {
+  if (typeof navigator === 'undefined') {
+    return {};
+  }
+  const screenValue =
+    typeof window !== 'undefined' && window.screen
+      ? `${window.screen.width}x${window.screen.height}`
+      : null;
+  return {
+    userAgent: navigator.userAgent || null,
+    language: navigator.language || null,
+    timezone:
+      typeof Intl !== 'undefined'
+        ? Intl.DateTimeFormat().resolvedOptions().timeZone || null
+        : null,
+    screen: screenValue,
+  };
+};
+
 const connect = (url = WS_URL) => {
   if (isConnected) {
     return;
@@ -91,7 +110,7 @@ const connect = (url = WS_URL) => {
 const sendEnter = () => {
   const id = ensureSessionId();
   const enteredAt = new Date().toISOString();
-  sendRaw({ type: 'enter', id, enteredAt });
+  sendRaw({ type: 'enter', id, enteredAt, meta: getClientMeta() });
   return { id, enteredAt };
 };
 

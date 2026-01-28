@@ -7,18 +7,20 @@
   >
     <div class="bottom element opacity-25" v-if="!isContinuation"></div>
     <div
-      class="opacity-80 w-full h-full front overflow-hidden bg-[rgba(50,50,50,1)]"
+      class="opacity-80 w-full h-full front overflow-hidden"
       :class="[
-        isHighlighted
+        isZooming
+          ? 'border-none bg-transparent'
+          : isHighlighted
           ? 'border-[var(--highlight-color)] is-highlighed'
-          : 'border-primary',
+          : 'border-primary bg-[rgba(50,50,50,1)]',
         {
-          'border-t-[0.5px]': isLastSegment && !isHighlighted,
-          'border-t-[2px]': isLastSegment && isHighlighted,
-          'border-b-[0.5px]': !isContinuation && !isHighlighted,
-          'border-b-[2px]': !isContinuation && isHighlighted,
-          'border-x-[0.5px]': !isHighlighted,
-          'border-x-[2px]': isHighlighted,
+          'border-t-[0.5px]': !isZooming && isLastSegment && !isHighlighted,
+          'border-t-[2px]': !isZooming && isLastSegment && isHighlighted,
+          'border-b-[0.5px]': !isZooming && !isContinuation && !isHighlighted,
+          'border-b-[2px]': !isZooming && !isContinuation && isHighlighted,
+          'border-x-[0.5px]': !isZooming && !isHighlighted,
+          'border-x-[2px]': !isZooming && isHighlighted,
         },
       ]"
     >
@@ -28,27 +30,32 @@
       class="top element relative overflow-hidden opacity-50"
       :style="topStyle"
       :class="[
-        isHighlighted
+        isZooming
+          ? 'border-none'
+          : isHighlighted
           ? 'border-[var(--highlight-color)]  border-y-[2px] border-x-[4px] is-highlighed'
           : 'border-primary border-[0.5px]',
       ]"
-      v-if="isLastSegment"
+      v-if="isLastSegment && !isZooming"
     ></div>
     <div
       class="side element opacity-50"
       :class="[
-        isHighlighted
+        isZooming
+          ? 'border-none'
+          : isHighlighted
           ? 'border-[var(--highlight-color)] is-highlighed'
           : 'border-primary',
         {
-          'border-t-[0.5px]': isLastSegment && !isHighlighted,
-          'border-b-[2px]': !isContinuation && !isHighlighted,
-          'border-t-[0.5px]': isLastSegment && isHighlighted,
-          'border-b-[2px]': !isContinuation && isHighlighted,
-          'border-x-[0.5px]': !isHighlighted,
-          'border-x-[2px]': isHighlighted,
+          'border-t-[0.5px]': !isZooming && isLastSegment && !isHighlighted,
+          'border-b-[2px]': !isZooming && !isContinuation && !isHighlighted,
+          'border-t-[0.5px]': !isZooming && isLastSegment && isHighlighted,
+          'border-b-[2px]': !isZooming && !isContinuation && isHighlighted,
+          'border-x-[0.5px]': !isZooming && !isHighlighted,
+          'border-x-[2px]': !isZooming && isHighlighted,
         },
       ]"
+      v-if="!isZooming"
     ></div>
   </article>
 </template>
@@ -83,6 +90,10 @@ const props = defineProps({
     default: null,
   },
 });
+
+import { useZoomState } from '../timeline/store/zoomState';
+
+const { isZooming } = useZoomState();
 
 const route = useRoute();
 const isHighlighted = computed(
@@ -160,6 +171,9 @@ onBeforeMount(() => {
 });
 
 const frontStyle = computed(() => {
+  if (isZooming.value) {
+    return {};
+  }
   const { linear } = gradientsForId(props.id);
   return {
     backgroundImage: `${linear}`,
@@ -169,6 +183,9 @@ const frontStyle = computed(() => {
 });
 
 const topStyle = computed(() => {
+  if (isZooming.value) {
+    return {};
+  }
   const { radial } = gradientsForId(props.id);
   return {
     backgroundPositionY: '-10%',

@@ -75,8 +75,8 @@ module.exports = {
       transitionDuration: {
         custom: '500ms',
       },
-      filter: {
-        'blur-custom': 'blur(2px)',
+      blur: {
+        custom: '2px',
       },
       colors: {
         primary: 'var(--primary)',

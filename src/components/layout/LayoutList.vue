@@ -4,6 +4,7 @@
       v-for="(visitor, index) in sortedVisitors"
       :key="visitor.id"
       :visitor="visitor"
+      :now="now"
       :index="index"
     />
   </section>
@@ -14,7 +15,7 @@ import { computed, onMounted } from 'vue';
 import { useVisitorSocket } from '../timeline/store/visitorSocket';
 import LayoutListItem from './LayoutListItem.vue';
 
-const { visitors, connect } = useVisitorSocket();
+const { visitors, now, connect } = useVisitorSocket();
 
 const sortedVisitors = computed(() =>
   [...visitors.value].sort((a, b) => {

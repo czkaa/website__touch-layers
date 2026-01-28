@@ -2,10 +2,6 @@
   <main class="w-frame-w h-frame-h overflow-hidden">
     <SnippetsHeader />
     <TimelineStage :highlight-visit-id="currentId" />
-
-    <div class="fixed top-0 bg-white text-black text-sm">
-      {{ currentDuration }}
-    </div>
   </main>
 </template>
 

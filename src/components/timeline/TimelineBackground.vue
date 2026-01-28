@@ -8,6 +8,10 @@
         :key="hour.id"
       />
     </template>
+
+    <div class="absolute w-full h-full top-0 left-0 px-xs flex justify-between">
+      <TimeLineRandomVertical v-for="n in 8" :key="n" />
+    </div>
   </div>
 </template>
 

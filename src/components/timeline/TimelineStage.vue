@@ -31,6 +31,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { Gesture } from '@use-gesture/vanilla';
 import debounce from 'lodash.debounce';
 import { timeSlots as defaultTimeSlots } from './store/visits';
+import { useZoomState } from './store/zoomState';
 
 defineProps({
   timeSlots: {
@@ -53,6 +54,7 @@ const stageRef = ref(null);
 const isScrolling = ref(false);
 const pinchHandled = ref(false);
 const gestureInstance = ref(null);
+const { setZoomingFor } = useZoomState();
 const stopScrolling = debounce(() => {
   isScrolling.value = false;
 }, 100);
@@ -144,6 +146,7 @@ const applyZoomAtClientY = (clientY) => {
   console.log('applyZoomAtClientY', clientY);
   selectedId.value = null;
   focusedHourKey.value = null;
+  setZoomingFor(1000);
   zoomScale.value = ZOOM_LEVELS[1];
   nextTick(() => {
     setTranslateForCenterRatio();
