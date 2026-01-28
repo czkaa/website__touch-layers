@@ -1,5 +1,5 @@
 <template>
-  <div class="timeline-hours flex flex-col-reverse">
+  <div class="timeline-hours w-full flex flex-col-reverse -z-10 relative">
     <template v-if="hourBlocks">
       <TimelineBackgroundHour
         v-for="hour in hourBlocks"
@@ -13,11 +13,17 @@
 
 <script setup>
 import { computed } from 'vue';
+import { timeSlots as defaultTimeSlots } from './store/visits';
+import TimelineBackgroundHour from './TimelineBackgroundHour.vue';
 
 const props = defineProps({
-  hours: {
+  timeSlots: {
     type: Array,
-    required: true,
+    default: () => defaultTimeSlots,
+  },
+  hourMs: {
+    type: Number,
+    default: 60 * 60 * 1000,
   },
   showSubdivisions: {
     type: Boolean,
@@ -26,12 +32,49 @@ const props = defineProps({
 });
 
 const hourBlocks = computed(() => {
-  const hourCount = Math.max(props.hours.length, 1);
-  return props.hours.map((hour, index) => ({
-    id: `hour-block-${hour.id}`,
-    label: hour.label,
-    dateLabel: hour.dateLabel,
-  }));
+  const hours = [];
+  props.timeSlots.forEach((slot) => {
+    const startMs = new Date(slot.start).getTime();
+    const endMs = new Date(slot.end).getTime();
+    if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs <= startMs) {
+      return;
+    }
+    const startHour = new Date(startMs);
+    startHour.setMinutes(0, 0, 0);
+    const endHour = new Date(endMs);
+    endHour.setMinutes(0, 0, 0);
+    const endIsExactHour = endMs === endHour.getTime();
+    const lastHour = endIsExactHour
+      ? endHour.getTime() - props.hourMs
+      : endHour.getTime();
+
+    for (let t = startHour.getTime(); t <= lastHour; t += props.hourMs) {
+      const markDate = new Date(t);
+      const dateKey = markDate.toISOString().slice(0, 10);
+      hours.push({
+        id: `hour-${t}`,
+        label: markDate.toTimeString().slice(0, 5),
+        dateKey,
+      });
+    }
+  });
+
+  let lastDateKey = '';
+  return hours.map((hour) => {
+    const dateLabel =
+      hour.dateKey !== lastDateKey
+        ? new Date(hour.dateKey).toLocaleDateString('de-DE', {
+            day: '2-digit',
+            month: '2-digit',
+          })
+        : '';
+    lastDateKey = hour.dateKey;
+    return {
+      id: `hour-block-${hour.id}`,
+      label: hour.label,
+      dateLabel,
+    };
+  });
 });
 </script>
 

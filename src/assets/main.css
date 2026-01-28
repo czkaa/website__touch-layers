@@ -5,8 +5,8 @@
 
 
 :root {
-  --color-primary: grey;
-  --color-secondary: black;
+  --primary: grey;
+  --secondary: black;
   --depth: 40px;
 }
 

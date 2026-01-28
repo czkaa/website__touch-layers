@@ -1,28 +1,29 @@
 <template>
-  <div :key="hour.id" class="hour-block z-50 flex-1 sticky top-0">
+  <div :key="hour.id" class="hour-block flex-1 p-1 font-geist-mono">
     <div
-      :class="[hour.dateLabel ? 'w-full' : 'w-10']"
-      class="h-[2px] bg-primary absolute bottom-0 right-0 rounded-full"
+      :class="[hour.dateLabel ? 'h-[6px] blur-[2px]' : 'h-[2px]']"
+      class="absolute bottom-0 right-0 w-full bg-primary rounded-full"
     ></div>
 
     <div
-      class="w-10 h-[2px] bg-primary absolute bottom-0 left-0 rounded-full"
-    ></div>
+      class="absolute w-full h-full left-0 flex justify-between before:content-[''] before:absolute before:-top-2 before:left-1.5 before:w-1.5 before:h-1.5 before:bg-primary before:rotate-45 after:content-[''] after:absolute after:-top-2 after:right-1.5 after:w-1.5 after:h-1.5 after:bg-primary after:rotate-45 px-2"
+    >
+      <div v-for="n in 6" :key="n" class="h-full w-[1px] bg-primary"></div>
+    </div>
 
-    <label class="absolute bottom-0 text-primary z-50">
-      <span v-if="hour.dateLabel" class="text-md">
+    <label class="absolute bottom-0 left-3 text-primary">
+      <span v-if="hour.dateLabel" class="text-[1.5rem]">
         {{ hour.dateLabel }}
       </span>
-      <span v-else>{{ hour.label }}</span>
+      <span class="text-[0.9rem]" v-else>{{ hour.label }}</span>
     </label>
 
     <div
+      class="absolute w-16 -right-[2%] h-full flex flex-col justify-around"
       v-if="showSubdivisions"
-      v-for="minute in minuteSteps"
-      :key="minute"
-      class="minute-block"
-      :style="{ top: `${(minute / 60) * 100}%` }"
-    ></div>
+    >
+      <div v-for="n in 10" class="w-full h-[1px] bg-primary"></div>
+    </div>
   </div>
 </template>
 
@@ -37,8 +38,6 @@ const props = defineProps({
     default: false,
   },
 });
-
-const minuteSteps = [6, 12, 18, 24, 30, 36, 42, 48, 54];
 </script>
 
 <style scoped>
@@ -53,13 +52,5 @@ const minuteSteps = [6, 12, 18, 24, 30, 36, 42, 48, 54];
   height: 2px;
   background: var(--color-primary);
   width: 2rem;
-}
-
-.minute-block {
-  position: absolute;
-  right: 0;
-  width: 2rem;
-  height: 1px;
-  background: var(--color-primary);
 }
 </style>

@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="no-visit absolute transition-[height] duration-200 linear"
-    :style="style"
-  >
+  <div class="no-visit absolute pointer-events-none" :style="style">
     <div
       class="absolute left-[0] w-1.5 h-full bg-pole rounded-b-[10rem] ml-5 -mt-1.5"
     ></div>

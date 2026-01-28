@@ -15,11 +15,12 @@ module.exports = {
   },
   theme: {
     fontFamily: {
-      'geist-mono': ['"Geist Mono"', 'monospace'],
+      'geist-mono': ['Geist-Mono-Light', 'monospace'],
     },
     fontSize: {
-      'root-desktop': '1.5vw',
-      'root-mobile': '1.5vw',
+      'root-screen': '1.75vh',
+      'root-desktop': '1.75vh',
+      'root-mobile': '1.5vh',
 
       lg: [
         '6rem', // 32
@@ -42,11 +43,11 @@ module.exports = {
           letterSpacing: '0.05em',
         },
       ],
-      'sm-wide': [
-        '0.9rem', // 20
+      xs: [
+        '0.7rem', // 20
         {
           lineHeight: '1.15em', // 26
-          letterSpacing: '0.2em',
+          letterSpacing: '0.05em',
         },
       ],
     },
@@ -74,9 +75,12 @@ module.exports = {
       transitionDuration: {
         custom: '500ms',
       },
+      filter: {
+        'blur-custom': 'blur(2px)',
+      },
       colors: {
-        primary: 'white',
-        secondary: 'black',
+        primary: 'var(--primary)',
+        secondary: 'var(--secondary)',
         highlight: 'lime',
       },
       boxShadow: {

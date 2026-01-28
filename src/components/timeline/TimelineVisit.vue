@@ -1,27 +1,55 @@
 <template>
   <article
-    class="absolute front element transition-[height] duration-200 linear"
+    class="absolute front element"
     :style="mergedStyle"
     data-visit="true"
+    :data-segment-id="segmentId || null"
   >
     <div class="bottom element opacity-25" v-if="!isContinuation"></div>
     <div
-      class="opacity-70 w-full h-full front overflow-hidden border-x-[0.5px] border-white bg-[rgba(50,50,50,1)]"
+      class="opacity-80 w-full h-full front overflow-hidden bg-[rgba(50,50,50,1)]"
       :class="[
+        isHighlighted
+          ? 'border-[var(--highlight-color)] is-highlighed'
+          : 'border-primary',
         {
-          'border-b-[0.5px] ': !isContinuation,
-          'border-t-[0.5px] ': isLastSegment,
+          'border-t-[0.5px]': isLastSegment && !isHighlighted,
+          'border-t-[2px]': isLastSegment && isHighlighted,
+          'border-b-[0.5px]': !isContinuation && !isHighlighted,
+          'border-b-[2px]': !isContinuation && isHighlighted,
+          'border-x-[0.5px]': !isHighlighted,
+          'border-x-[2px]': isHighlighted,
         },
       ]"
     >
       <div :style="frontStyle" class="w-[75vw] h-[80vh]"></div>
     </div>
     <div
-      class="top element relative overflow-hidden"
+      class="top element relative overflow-hidden opacity-50"
       :style="topStyle"
+      :class="[
+        isHighlighted
+          ? 'border-[var(--highlight-color)]  border-y-[2px] border-x-[4px] is-highlighed'
+          : 'border-primary border-[0.5px]',
+      ]"
       v-if="isLastSegment"
     ></div>
-    <div class="side element"></div>
+    <div
+      class="side element opacity-50"
+      :class="[
+        isHighlighted
+          ? 'border-[var(--highlight-color)] is-highlighed'
+          : 'border-primary',
+        {
+          'border-t-[0.5px]': isLastSegment && !isHighlighted,
+          'border-b-[2px]': !isContinuation && !isHighlighted,
+          'border-t-[0.5px]': isLastSegment && isHighlighted,
+          'border-b-[2px]': !isContinuation && isHighlighted,
+          'border-x-[0.5px]': !isHighlighted,
+          'border-x-[2px]': isHighlighted,
+        },
+      ]"
+    ></div>
   </article>
 </template>
 
@@ -33,6 +61,10 @@ const props = defineProps({
   id: {
     type: String,
     required: true,
+  },
+  segmentId: {
+    type: String,
+    default: null,
   },
   isContinuation: {
     type: Boolean,
@@ -53,9 +85,8 @@ const props = defineProps({
 });
 
 const route = useRoute();
-console.log('ROUTE', route);
-const isNotColored = computed(
-  () => !props.isHighlight && route.name === 'visitor',
+const isHighlighted = computed(
+  () => props.isHighlight && route.name === 'visitor',
 );
 
 const palette = [
@@ -131,7 +162,7 @@ onBeforeMount(() => {
 const frontStyle = computed(() => {
   const { linear } = gradientsForId(props.id);
   return {
-    backgroundImage: isNotColored.value ? 'none' : `${linear}`,
+    backgroundImage: `${linear}`,
     backgroundAttachment: 'fixed',
     transform: `translateX(-${props.style.left})`,
   };
@@ -143,7 +174,7 @@ const topStyle = computed(() => {
     backgroundPositionY: '-10%',
     backgroundSize: '80vw auto',
     backgroundRepeat: 'no-repeat',
-    backgroundImage: isNotColored.value ? 'none' : `${radial}`,
+    backgroundImage: `${radial}`,
   };
 });
 
@@ -157,34 +188,39 @@ const mergedStyle = computed(() => ({
   --top-angle: -60deg;
   --side-angle: -30deg;
   --side-depth-multiplier: 1.7;
+  --highlight-color: rgb(0, 255, 55);
+}
+
+.element {
+  border-radius: 1px;
+}
+
+.is-highlighed {
+  /* filter: drop-shadow(0 0 10px rgb(88, 133, 255))
+    drop-shadow(0 0 10px rgb(88, 133, 255)); */
 }
 
 /* TOP */
 .top {
   position: absolute;
   top: 0;
-  left: -1px;
+  left: -2px;
   background: #4c4c4c;
-  width: calc(100% + 1px);
+  width: calc(100% + 2px);
   height: var(--depth);
   transform: translateY(-100%) skewX(var(--top-angle));
   transform-origin: left bottom;
-  opacity: 0.5;
-  border-top: 0.5px solid rgba(255, 255, 255, 1);
-  border-right: 0.5px solid rgba(255, 255, 255, 1);
-  border-left: 0.5px solid rgba(255, 255, 255, 1);
 }
 
 .bottom {
   position: absolute;
   top: 100%;
-  left: -1px;
+  left: -2px;
   background: #2d2d2d;
-  width: calc(100% + 1px);
+  width: calc(100% + 2px);
   height: var(--depth);
   transform: translateY(-100%) skewX(var(--top-angle));
   transform-origin: left bottom;
-  border-bottom: 0.5px solid rgba(255, 255, 255, 1);
 }
 
 /* SIDE */
@@ -196,9 +232,6 @@ const mergedStyle = computed(() => ({
   height: 100%;
   transform: skewY(var(--side-angle)) translateX(100%);
   transform-origin: right top;
-  opacity: 0.5;
   background: #242424;
-  border-bottom: 0.5px solid rgba(255, 255, 255, 1);
-  border-right: 0.5px solid rgba(255, 255, 255, 1);
 }
 </style>

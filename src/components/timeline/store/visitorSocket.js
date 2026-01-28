@@ -11,7 +11,7 @@ let ws = null;
 let timer = null;
 let isConnected = false;
 const pendingMessages = [];
-const THROTTLE_MS = 200;
+const THROTTLE_MS = 0;
 const applyVisitors = throttle((next) => {
   visitors.value = next;
 }, THROTTLE_MS);
@@ -76,9 +76,15 @@ const connect = (url = WS_URL) => {
   });
 
   if (!timer) {
-    timer = setInterval(() => {
-      now.value = Date.now();
-    }, 1000);
+    let last = 0;
+    const tick = (ts) => {
+      if (ts - last >= 1000 / 30) {
+        last = ts;
+        now.value = Date.now();
+      }
+      timer = requestAnimationFrame(tick);
+    };
+    timer = requestAnimationFrame(tick);
   }
 };
 
@@ -103,7 +109,7 @@ const disconnect = () => {
   ws = null;
   isConnected = false;
   if (timer) {
-    clearInterval(timer);
+    cancelAnimationFrame(timer);
     timer = null;
   }
 };

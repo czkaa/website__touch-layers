@@ -4,7 +4,7 @@
       <component
         :is="Component"
         :key="route.path"
-        class="min-h-frame-h h-fit bg-secondary text-primary"
+        class="max-w-[66vh] mx-auto min-h-frame-h max-h-full h-fit bg-secondary text-primary"
       />
     </transition>
   </router-view>
@@ -12,6 +12,7 @@
 
 <script setup>
 import { useRoute } from 'vue-router';
+import { ref } from 'vue';
 
 const route = useRoute();
 </script>
@@ -19,8 +20,7 @@ const route = useRoute();
 <style>
 html,
 body {
-  @apply text-root-desktop md:text-root-mobile [font-weight:300];
-  background: var(--color-secondary);
+  @apply text-root-desktop md:text-root-mobile lg:text-root-screen [font-weight:300] bg-secondary;
   color: var(--color-primary);
 }
 
@@ -30,6 +30,21 @@ body {
 }
 .fade-enter-from,
 .fade-leave-to {
+  opacity: 0;
+}
+
+.slide-up-enter-active {
+  transition: all 0.3s ease-out;
+}
+.slide-up-leave-active {
+  transition: all 0.3s ease-in;
+}
+.slide-up-enter-from {
+  transform: translateY(100%);
+  opacity: 0;
+}
+.slide-up-leave-to {
+  transform: translateY(100%);
   opacity: 0;
 }
 </style>

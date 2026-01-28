@@ -1,3 +1,4 @@
+// Normalize ISO strings into { startMs, endMs } and drop invalid ranges.
 const toRange = (range) => {
   const startMs = new Date(range.start).getTime();
   const endMs = new Date(range.end).getTime();
@@ -7,26 +8,68 @@ const toRange = (range) => {
   return { ...range, startMs, endMs };
 };
 
+// Sort ranges by start time.
 const sortByStart = (a, b) => a.startMs - b.startMs;
 
-const buildSlotMeta = (slots) => {
-  let totalMs = 0;
-  const meta = slots.map((slot) => {
-    const entry = { ...slot, offsetMs: totalMs };
-    totalMs += slot.endMs - slot.startMs;
-    return entry;
-  });
-  return { meta, totalMs: Math.max(totalMs, 1) };
-};
-
-const slotForTime = (slots, ms) =>
-  slots.find((slot) => ms >= slot.startMs && ms < slot.endMs);
-
+// True if two ranges overlap (open interval).
 const overlaps = (startA, endA, startB, endB) => startA < endB && endA > startB;
 
-const buildSegmentsForSlot = (slot, visits, timeToRatio, nowMs) => {
+// Use explicit slots if provided, otherwise a single slot spanning all visits.
+const buildSlots = (timeSlots, visits) => {
+  if (timeSlots.length) return timeSlots;
+  if (!visits.length) return [];
+  return [
+    {
+      id: 'slot-fallback',
+      startMs: visits[0].startMs,
+      endMs: visits[visits.length - 1].endMs,
+    },
+  ];
+};
+
+// Compute slot heights as percentages across the whole timeline (all slots stacked end-to-end).
+const buildSlotTimeline = (slots) => {
+  const totalMs = Math.max(
+    slots.reduce((sum, slot) => sum + (slot.endMs - slot.startMs), 0),
+    1,
+  );
+  let offsetMs = 0;
+  return slots.map((slot) => {
+    const durationMs = slot.endMs - slot.startMs;
+    const startPct = (offsetMs / totalMs) * 100;
+    const heightPct = (durationMs / totalMs) * 100;
+    offsetMs += durationMs;
+    return { ...slot, durationMs, startPct, heightPct };
+  });
+};
+
+// Map a real timestamp into a 0..100 percentage across the slot timeline.
+const timeToPct = (slot, ms) => {
+  if (ms < slot.startMs || ms >= slot.endMs) {
+    return null;
+  }
+  const offsetMs = ms - slot.startMs;
+  return slot.startPct + (offsetMs / slot.durationMs) * slot.heightPct;
+};
+
+// Build all segment boundaries inside a slot (visit starts/ends + now).
+const buildBoundaries = (slot, overlapRanges, nowMs) => {
+  const points = new Set([slot.startMs, slot.endMs]);
+  overlapRanges.forEach((range) => {
+    points.add(range.start);
+    points.add(range.end);
+  });
+  if (Number.isFinite(nowMs) && nowMs > slot.startMs && nowMs < slot.endMs) {
+    points.add(nowMs);
+  }
+  return Array.from(points).sort((a, b) => a - b);
+};
+
+// Split a slot into visit segments and gap segments.
+const buildSegmentsForSlot = (slot, visits, nowMs) => {
   const segments = [];
   const noVisits = [];
+
   const overlapRanges = visits
     .filter((visit) => overlaps(visit.startMs, visit.endMs, slot.startMs, slot.endMs))
     .map((visit) => ({
@@ -36,42 +79,37 @@ const buildSegmentsForSlot = (slot, visits, timeToRatio, nowMs) => {
     }))
     .filter((range) => range.end > range.start);
 
-  const boundaries = new Set([
-    slot.startMs,
-    slot.endMs,
-    ...overlapRanges.flatMap((range) => [range.start, range.end]),
-  ]);
-  if (Number.isFinite(nowMs) && nowMs > slot.startMs && nowMs < slot.endMs) {
-    boundaries.add(nowMs);
-  }
-  const ordered = Array.from(boundaries).sort((a, b) => a - b);
+  const boundaries = buildBoundaries(slot, overlapRanges, nowMs);
 
-  for (let i = 0; i < ordered.length - 1; i += 1) {
-    const segStart = ordered[i];
-    const segEnd = ordered[i + 1];
+  for (let i = 0; i < boundaries.length - 1; i += 1) {
+    const segStart = boundaries[i];
+    const segEnd = boundaries[i + 1];
     if (segEnd <= segStart) {
       continue;
     }
 
-    const active = overlapRanges
+    // Visits active during this slice of time.
+    const activeVisits = overlapRanges
       .filter((range) => overlaps(range.start, range.end, segStart, segEnd))
       .map((range) => range.visit)
       .sort((a, b) => a.startMs - b.startMs || a.id.localeCompare(b.id));
 
-    const startRatio = timeToRatio(segStart);
-    const endRatio = timeToRatio(segEnd);
-    if (startRatio == null || endRatio == null) {
+    const startPct = timeToPct(slot, segStart);
+    const endPct = timeToPct(slot, segEnd);
+    if (startPct == null || endPct == null) {
       continue;
     }
 
-    if (active.length === 0) {
-      const duration = Math.max(endRatio - startRatio, 0);
+    const durationPct = Math.max(endPct - startPct, 0);
+
+    // No visits => background gap segment.
+    if (!activeVisits.length) {
       noVisits.push({
         id: `gap-${segStart}`,
         segStart,
         style: {
-          bottom: `${startRatio * 100}%`,
-          height: `${duration * 100}%`,
+          bottom: `${startPct}%`,
+          height: `${durationPct}%`,
           left: '0%',
           width: '100%',
         },
@@ -79,19 +117,19 @@ const buildSegmentsForSlot = (slot, visits, timeToRatio, nowMs) => {
       continue;
     }
 
-    const laneWidth = 100 / active.length;
-    active.forEach((visit, index) => {
-      const duration = Math.max(endRatio - startRatio, 0);
+    // Shared slice => split horizontally into lanes.
+    const laneWidth = 100 / activeVisits.length;
+    activeVisits.forEach((visit, index) => {
       segments.push({
         id: `${visit.id}-${segStart}`,
         visitId: visit.id,
         segEnd,
         segStart,
         hourStartMs: new Date((segStart + segEnd) / 2).setMinutes(0, 0, 0),
-        centerRatio: (startRatio + endRatio) / 2,
+        centerRatio: (startPct + endPct) / 200,
         style: {
-          bottom: `${startRatio * 100}%`,
-          height: `${duration * 100}%`,
+          bottom: `${startPct}%`,
+          height: `${durationPct}%`,
           left: `${index * laneWidth}%`,
           width: `${laneWidth}%`,
         },
@@ -102,55 +140,8 @@ const buildSegmentsForSlot = (slot, visits, timeToRatio, nowMs) => {
   return { segments, noVisits };
 };
 
-export const buildTimelineLayout = ({ visits, timeSlots, hourMs, nowMs }) => {
-  const sortedVisits = (visits || [])
-    .map((visit) => toRange(visit))
-    .filter(Boolean)
-    .sort(sortByStart);
-
-  const slots = (timeSlots || [])
-    .map((slot) => toRange(slot))
-    .filter(Boolean)
-    .sort(sortByStart);
-
-  const slotRanges =
-    slots.length > 0
-      ? slots
-      : sortedVisits.length > 0
-        ? [
-            {
-              id: 'slot-fallback',
-              startMs: sortedVisits[0].startMs,
-              endMs: sortedVisits[sortedVisits.length - 1].endMs,
-            },
-          ]
-        : [];
-
-  const { meta: slotMeta, totalMs: safeTotalMs } = buildSlotMeta(slotRanges);
-
-  const timeToRatio = (ms) => {
-    const slot = slotForTime(slotMeta, ms);
-    if (!slot) {
-      return null;
-    }
-    const offset = slot.offsetMs + (ms - slot.startMs);
-    return offset / safeTotalMs;
-  };
-
-  const segments = [];
-  const noVisits = [];
-
-  slotMeta.forEach((slot) => {
-    const { segments: slotSegments, noVisits: slotGaps } = buildSegmentsForSlot(
-      slot,
-      sortedVisits,
-      timeToRatio,
-      nowMs,
-    );
-    segments.push(...slotSegments);
-    noVisits.push(...slotGaps);
-  });
-
+// Mark whether a segment continues directly from a previous segment.
+const markVisitContinuations = (segments) => {
   const lastSegmentByVisit = new Map();
   segments
     .slice()
@@ -160,7 +151,10 @@ export const buildTimelineLayout = ({ visits, timeSlots, hourMs, nowMs }) => {
       segment.isContinuation = prev?.segEnd === segment.segStart;
       lastSegmentByVisit.set(segment.visitId, { segEnd: segment.segEnd });
     });
+};
 
+// Mark the last segment per visit so caps render correctly.
+const markVisitEndings = (segments) => {
   const maxEndByVisit = new Map();
   segments.forEach((segment) => {
     const prevEnd = maxEndByVisit.get(segment.visitId);
@@ -171,37 +165,41 @@ export const buildTimelineLayout = ({ visits, timeSlots, hourMs, nowMs }) => {
   segments.forEach((segment) => {
     segment.isLastSegment = segment.segEnd === maxEndByVisit.get(segment.visitId);
   });
+};
 
-  const hours = [];
-  for (const slot of slotMeta) {
-    const startHour = new Date(slot.startMs);
-    startHour.setMinutes(0, 0, 0);
-    const endHour = new Date(slot.endMs);
-    endHour.setMinutes(0, 0, 0);
-    const endIsExactHour = slot.endMs === endHour.getTime();
-    const lastHour = endIsExactHour ? endHour.getTime() - hourMs : endHour.getTime();
+// Main layout builder used by the timeline view.
+export const buildTimelineLayout = ({ visits, timeSlots, nowMs }) => {
+  const normalizedVisits = (visits || [])
+    .map((visit) => toRange(visit))
+    .filter(Boolean)
+    .sort(sortByStart);
 
-    for (let t = startHour.getTime(); t <= lastHour; t += hourMs) {
-      const ratio = timeToRatio(t);
-      if (ratio == null) {
-        continue;
-      }
-      const markDate = new Date(t);
-      const dateKey = markDate.toISOString().slice(0, 10);
-      hours.push({
-        id: `hour-${t}`,
-        offset: ratio,
-        label: markDate.toTimeString().slice(0, 5),
-        dateKey,
-        startMs: t,
-      });
-    }
-  }
+  const normalizedSlots = (timeSlots || [])
+    .map((slot) => toRange(slot))
+    .filter(Boolean)
+    .sort(sortByStart);
+
+  const slots = buildSlots(normalizedSlots, normalizedVisits);
+  // Convert slots to percentages so all styling is relative to the same 0..100%.
+  const slotTimeline = buildSlotTimeline(slots);
+
+  const segments = [];
+  const noVisits = [];
+
+  slotTimeline.forEach((slot) => {
+    const { segments: slotSegments, noVisits: slotGaps } =
+      buildSegmentsForSlot(slot, normalizedVisits, nowMs);
+    segments.push(...slotSegments);
+    noVisits.push(...slotGaps);
+  });
+
+  markVisitContinuations(segments);
+  markVisitEndings(segments);
 
   const items = [
     ...segments.map((segment) => ({ ...segment, type: 'visit' })),
     ...noVisits.map((gap) => ({ ...gap, type: 'gap' })),
   ].sort((a, b) => (a.segStart ?? 0) - (b.segStart ?? 0));
 
-  return { items, hours };
+  return { items };
 };
