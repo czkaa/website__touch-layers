@@ -1,8 +1,8 @@
 <template>
   <article
-    class="border-t border-primary bg-secondary fixed left-0 bottom-0 w-full z-50 h-full overflow-y-auto"
+    class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-custom mx-auto z-50 h-frame-h bg-secondary overflow-y-auto"
   >
-    <SnippetsTitle />
+    <SnippetsTitle size="xs" />
     <div class="p-sm">
       <p class="border-b border-primary pb-sm mb-sm">Lorem Ipsum</p>
       <LayoutList class="" />

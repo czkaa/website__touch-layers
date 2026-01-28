@@ -12,7 +12,7 @@
       :class="[
         isScrolling
           ? 'transition-none'
-          : 'transition-[transform,height] duration-[1000ms] ease-out',
+          : 'transition-[transform,height] duration-[500ms] ease-out',
       ]"
     >
       <TimelineSimple
@@ -148,12 +148,9 @@ const applyZoomAtClientY = (clientY) => {
   focusedHourKey.value = null;
   setZoomingFor(1000);
   zoomScale.value = ZOOM_LEVELS[1];
-  nextTick(() => {
-    setTranslateForCenterRatio();
-    clampTranslateToBounds();
-    setTranslatePxFromClientY(clientY);
-    clampTranslateToBounds();
-  });
+  setTranslateForCenterRatio();
+  setTranslatePxFromClientY(clientY);
+  clampTranslateToBounds();
 };
 
 const handleStageClick = (event) => {

@@ -29,6 +29,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { timeSlots as defaultTimeSlots, visits } from './store/visits';
 import TimelineBackground from './TimelineBackground.vue';
 import TimelineNoVisit from './TimelineNoVisit.vue';
@@ -37,6 +38,8 @@ import { buildTimelineLayout } from './timelineLayout';
 import { useVisitorSocket } from './store/visitorSocket';
 
 const emit = defineEmits(['select']);
+const route = useRoute();
+const skipFirstFocus = ref(true);
 
 const props = defineProps({
   timeSlots: {
@@ -91,6 +94,13 @@ watch(
   () => visitors.value.length,
   (next, prev) => {
     if (next <= prev) {
+      return;
+    }
+    if (route.name !== 'index') {
+      return;
+    }
+    if (skipFirstFocus.value) {
+      skipFirstFocus.value = false;
       return;
     }
     const newest = visitors.value[visitors.value.length - 1];

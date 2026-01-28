@@ -75,6 +75,9 @@ module.exports = {
       transitionDuration: {
         custom: '500ms',
       },
+      maxWidth: {
+        custom: '66vh',
+      },
       blur: {
         custom: '2px',
       },

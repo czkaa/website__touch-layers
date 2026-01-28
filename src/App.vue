@@ -4,7 +4,7 @@
       <component
         :is="Component"
         :key="route.path"
-        class="max-w-[66vh] mx-auto min-h-frame-h max-h-full h-fit bg-secondary text-primary"
+        class="max-w-custom mx-auto min-h-frame-h max-h-full h-fit bg-secondary text-primary"
       />
     </transition>
   </router-view>
@@ -34,17 +34,13 @@ body {
 }
 
 .slide-up-enter-active {
-  transition: all 0.3s ease-out;
+  transition: all 0.5s ease-out;
 }
 .slide-up-leave-active {
-  transition: all 0.3s ease-in;
+  transition: all 0.5s ease-in;
 }
-.slide-up-enter-from {
-  transform: translateY(100%);
-  opacity: 0;
-}
+.slide-up-enter-from,
 .slide-up-leave-to {
-  transform: translateY(100%);
-  opacity: 0;
+  transform: translateY(100%) translateX(-50%);
 }
 </style>

@@ -7,11 +7,11 @@
     <TimeLineRandomHorizontal v-else />
 
     <div
-      class="absolute w-full h-full left-0 flex justify-between before:content-[''] before:absolute before:-top-1 before:left-0.5 before:w-1.5 before:h-1.5 before:bg-primary before:rotate-45 after:content-[''] after:absolute after:-top-2 after:right-1.5 after:w-1.5 after:h-1.5 after:bg-primary after:rotate-45 px-2"
+      class="absolute w-full h-full left-0 flex justify-between before:content-[''] before:absolute before:-top-1 before:left-1.5 before:w-1.5 before:h-1.5 before:bg-primary before:rotate-45 after:content-[''] after:absolute after:-top-2 after:right-1.5 after:w-1.5 after:h-1.5 after:bg-primary after:rotate-45 px-2"
     ></div>
 
     <label class="absolute bottom-0 left-3 text-primary">
-      <span v-if="hour.dateLabel" class="text-[1.5rem]">
+      <span v-if="hour.dateLabel" class="text-[1.5rem] blur-[1px]">
         {{ hour.dateLabel }}
       </span>
       <span class="text-[0.9rem]" v-else>{{ hour.label }}</span>

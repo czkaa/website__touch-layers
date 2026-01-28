@@ -1,11 +1,8 @@
 <template>
-  <header class="w-full flex justify-between items-center mb-sm px-sm pt-sm">
-    <h1
-      class="w-full max-w-[66vh] mx-auto absolute top-0 left-1/2 -translate-x-1/2"
-    >
-      <span class="hidden">Your presence leaves traces</span>
-      <img src="/title.svg" class="mr-7 ml-20 blur-custom" />
-    </h1>
+  <header
+    class="absolute top-0 left-0 max-w-custom flex justify-between items-center mb-sm px-sm pt-sm e"
+  >
+    <SnippetsTitle />
 
     <transition name="slide-up">
       <LayoutOverlay v-if="showOverlay" />
@@ -24,6 +21,7 @@
 <script setup>
 import { ref } from 'vue';
 import LayoutOverlay from '../layout/LayoutOverlay.vue';
+import SnippetsTitle from './SnippetsTitle.vue';
 
 const showOverlay = ref(false);
 </script>

@@ -47,12 +47,29 @@ const getClientMeta = () => {
   if (typeof navigator === 'undefined') {
     return {};
   }
+  const ua = navigator.userAgent || '';
+  const device = /iPad|Tablet/i.test(ua)
+    ? 'tablet'
+    : /Mobi|Android|iPhone/i.test(ua)
+      ? 'mobile'
+      : 'desktop';
+  const browser = /Edg/i.test(ua)
+    ? 'Edge'
+    : /Chrome/i.test(ua) && !/Edg|OPR|Brave/i.test(ua)
+      ? 'Chrome'
+      : /Firefox/i.test(ua)
+        ? 'Firefox'
+        : /Safari/i.test(ua) && !/Chrome/i.test(ua)
+          ? 'Safari'
+          : 'Other';
   const screenValue =
     typeof window !== 'undefined' && window.screen
       ? `${window.screen.width}x${window.screen.height}`
       : null;
   return {
     userAgent: navigator.userAgent || null,
+    device,
+    browser,
     language: navigator.language || null,
     timezone:
       typeof Intl !== 'undefined'

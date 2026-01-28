@@ -4,14 +4,13 @@
     :style="mergedStyle"
     data-visit="true"
     :data-segment-id="segmentId || null"
+    :class="isZooming ? 'opacity-20' : 'opacity-50'"
   >
     <div class="bottom element opacity-25" v-if="!isContinuation"></div>
     <div
       class="opacity-80 w-full h-full front overflow-hidden"
       :class="[
-        isZooming
-          ? 'border-none bg-transparent'
-          : isHighlighted
+        isHighlighted
           ? 'border-[var(--highlight-color)] is-highlighed'
           : 'border-primary bg-[rgba(50,50,50,1)]',
         {
@@ -24,26 +23,26 @@
         },
       ]"
     >
-      <div :style="frontStyle" class="w-[75vw] h-[80vh]"></div>
+      <div
+        :style="frontStyle"
+        class="w-[75vw] h-[80vh] transition-opacity duration-500 ease-out"
+        :class="isZooming ? 'opacity-0' : 'opacity-100'"
+      ></div>
     </div>
     <div
-      class="top element relative overflow-hidden opacity-50"
+      class="top element relative overflow-hidden transition-opacity duration-500 ease-out"
       :style="topStyle"
       :class="[
-        isZooming
-          ? 'border-none'
-          : isHighlighted
+        isHighlighted
           ? 'border-[var(--highlight-color)]  border-y-[2px] border-x-[4px] is-highlighed'
           : 'border-primary border-[0.5px]',
       ]"
-      v-if="isLastSegment && !isZooming"
+      v-show="isLastSegment"
     ></div>
     <div
       class="side element opacity-50"
       :class="[
-        isZooming
-          ? 'border-none'
-          : isHighlighted
+        isHighlighted
           ? 'border-[var(--highlight-color)] is-highlighed'
           : 'border-primary',
         {
@@ -171,9 +170,6 @@ onBeforeMount(() => {
 });
 
 const frontStyle = computed(() => {
-  if (isZooming.value) {
-    return {};
-  }
   const { linear } = gradientsForId(props.id);
   return {
     backgroundImage: `${linear}`,
@@ -183,9 +179,6 @@ const frontStyle = computed(() => {
 });
 
 const topStyle = computed(() => {
-  if (isZooming.value) {
-    return {};
-  }
   const { radial } = gradientsForId(props.id);
   return {
     backgroundPositionY: '-10%',

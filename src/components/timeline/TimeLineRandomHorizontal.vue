@@ -1,7 +1,7 @@
 <template>
   <div
     :style="{ width: `${randomWidth}%`, left: `${randomOffset}%` }"
-    class="h-[1px] bg-primary"
+    class="h-[1px] bg-primary relative"
   ></div>
 </template>
 
