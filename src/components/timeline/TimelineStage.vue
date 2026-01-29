@@ -7,14 +7,13 @@
     @wheel.prevent.stop="handleWheel"
   >
     <div
-      class="timeline-zoom w-full"
-      :style="zoomStyle"
-      :class="[
-        isScrolling
-          ? 'transition-none'
-          : 'transition-[transform,height] duration-[500ms] ease-out',
-      ]"
+      class="absolute w-full h-full top-0 left-0 px-outer-2 flex justify-between"
     >
+      <div class="w-[1px] h-full bg-primary translate-x-[0.5px]"></div>
+      <div class="w-[1px] h-full bg-primary translate-x-[-0.5px]"></div>
+    </div>
+
+    <div class="timeline-zoom w-full" :style="[zoomStyle, zoomTransitionStyle]">
       <TimelineSimple
         :time-slots="timeSlots"
         :highlight-visit-id="highlightVisitId"
@@ -27,7 +26,14 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from 'vue';
 import { Gesture } from '@use-gesture/vanilla';
 import debounce from 'lodash.debounce';
 import { timeSlots as defaultTimeSlots } from './store/visits';
@@ -47,14 +53,15 @@ defineProps({
 const selectedId = ref(null);
 const ZOOM_LEVELS = [1, 100];
 const zoomScale = ref(1);
-const zoomTranslatePx = ref(0);
+const zoomTopPx = ref(0);
 const focusedHourKey = ref(null);
-const autoZooming = ref(false);
 const stageRef = ref(null);
 const isScrolling = ref(false);
-const pinchHandled = ref(false);
+const isZoomAnimating = ref(false);
 const gestureInstance = ref(null);
-const { setZoomingFor } = useZoomState();
+let zoomAnimationTimer = null;
+
+const { setZoomingFor, setZoomed } = useZoomState();
 const stopScrolling = debounce(() => {
   isScrolling.value = false;
 }, 100);
@@ -69,23 +76,27 @@ const initGestures = (el) => {
         }
         state.event?.preventDefault?.();
         const deltaY = state.delta?.[1] ?? 0;
-        zoomTranslatePx.value += deltaY;
+        zoomTopPx.value += deltaY;
       },
       onPinch: (state) => {
-        if (pinchHandled.value) {
+        if (!state?.first) {
           return;
         }
         state.event?.preventDefault?.();
         const originY = state.origin?.[1];
-        pinchHandled.value = true;
-        if (!isZoomed.value) {
+        const scale = state?.offset?.[0] ?? state?.scale;
+        const delta = state?.delta?.[0];
+        const isPinchOut =
+          typeof scale === 'number'
+            ? scale >= 1
+            : typeof delta === 'number'
+              ? delta >= 0
+              : null;
+        if (!isZoomed.value && isPinchOut) {
           applyZoomAtClientY(originY);
-        } else {
+        } else if (isZoomed.value && isPinchOut === false) {
           resetZoom();
         }
-      },
-      onPinchEnd: () => {
-        pinchHandled.value = false;
       },
     },
     { eventOptions: { passive: false } },
@@ -110,47 +121,95 @@ onMounted(() => {
 });
 
 const resetZoom = () => {
-  selectedId.value = null;
-  zoomScale.value = 1;
-  zoomTranslatePx.value = 0;
-  focusedHourKey.value = null;
+  setZoomingFor();
+  if (zoomAnimationTimer) {
+    clearTimeout(zoomAnimationTimer);
+    zoomAnimationTimer = null;
+  }
+  setTimeout(() => {
+    zoomScale.value = ZOOM_LEVELS[0];
+    zoomTopPx.value = 0;
+    focusedHourKey.value = null;
+    isZoomAnimating.value = false;
+  }, 300);
 };
 
-const setTranslatePxFromClientY = (clientY) => {
-  if (!stageRef.value || clientY == null) {
-    return;
+const getContentMetrics = () => {
+  if (!stageRef.value) {
+    return null;
   }
   const rect = stageRef.value.getBoundingClientRect();
   if (rect.height <= 0) {
-    return;
+    return null;
   }
-  const y = clamp(clientY - rect.top, 0, rect.height);
-  zoomTranslatePx.value = -(y * zoomScale.value);
+  const styles = window.getComputedStyle(stageRef.value);
+  const paddingTop = parseFloat(styles.paddingTop || '0');
+  const paddingBottom = parseFloat(styles.paddingBottom || '0');
+  const contentHeight = Math.max(rect.height - paddingTop - paddingBottom, 1);
+  return { rect, paddingTop, paddingBottom, contentHeight };
 };
 
-const clampTranslateToBounds = () => {
+const computeTopPxFromClientY = (clientY, scale) => {
+  if (!stageRef.value || clientY == null) {
+    return 0;
+  }
+  const metrics = getContentMetrics();
+  if (!metrics) {
+    return 0;
+  }
+  const { rect, paddingTop, contentHeight } = metrics;
+  const y = clamp(clientY - rect.top - paddingTop, 0, contentHeight);
+  const ratio = y / contentHeight;
+
+  // The point at this ratio will expand to: ratio * (scale * contentHeight)
+  // We want it to stay at viewport position y, so:
+  // ratio * (scale * contentHeight) + top = y
+  // Therefore: top = y - ratio * scale * contentHeight
+  return y - ratio * scale * contentHeight;
+};
+
+const clampTopToBounds = () => {
   if (!stageRef.value) {
     return;
   }
-  const rect = stageRef.value.getBoundingClientRect();
-  if (rect.height <= 0) {
+  if (isZoomAnimating.value) {
     return;
   }
-  const viewportHeight = rect.height;
-  const contentHeight = zoomScale.value * viewportHeight;
-  const minTranslate = -(contentHeight - viewportHeight);
-  zoomTranslatePx.value = clamp(zoomTranslatePx.value, minTranslate, 0);
+  const metrics = getContentMetrics();
+  if (!metrics) {
+    return;
+  }
+  const { contentHeight } = metrics;
+  const scaledContentHeight = zoomScale.value * contentHeight;
+  const viewportHeight = contentHeight;
+  const minTop = -(scaledContentHeight - viewportHeight);
+  zoomTopPx.value = clamp(zoomTopPx.value, minTop, 0);
 };
 
-const applyZoomAtClientY = (clientY) => {
+const applyZoomAtClientY = async (clientY) => {
   console.log('applyZoomAtClientY', clientY);
-  selectedId.value = null;
-  focusedHourKey.value = null;
-  setZoomingFor(1000);
-  zoomScale.value = ZOOM_LEVELS[1];
-  setTranslateForCenterRatio();
-  setTranslatePxFromClientY(clientY);
-  clampTranslateToBounds();
+  setZoomingFor();
+  if (zoomAnimationTimer) {
+    clearTimeout(zoomAnimationTimer);
+    zoomAnimationTimer = null;
+  }
+  isZoomAnimating.value = true;
+  await nextTick();
+  setTimeout(() => {
+    requestAnimationFrame(() => {
+      selectedId.value = null;
+      const targetScale = ZOOM_LEVELS[1];
+      const targetTop = computeTopPxFromClientY(clientY, targetScale);
+      zoomScale.value = targetScale;
+      zoomTopPx.value = targetTop;
+      focusedHourKey.value = null;
+      zoomAnimationTimer = setTimeout(() => {
+        isZoomAnimating.value = false;
+        clampTopToBounds();
+        zoomAnimationTimer = null;
+      }, 350);
+    });
+  }, 300);
 };
 
 const handleStageClick = (event) => {
@@ -161,25 +220,45 @@ const handleStageClick = (event) => {
   applyZoomAtClientY(event?.clientY);
 };
 
-const setTranslateForCenterRatio = () => {
-  zoomTranslatePx.value = 0;
-};
-
-const handleSelect = (clientY) => {
-  applyZoomAtClientY(clientY);
+const handleSelect = (payload) => {
+  if (!stageRef.value) {
+    return;
+  }
+  if (payload && typeof payload === 'object' && payload.ratio != null) {
+    const metrics = getContentMetrics();
+    if (!metrics) {
+      return;
+    }
+    const ratio = clamp(payload.ratio, 0, 1);
+    const { rect, paddingTop, contentHeight } = metrics;
+    const clientY = rect.top + paddingTop + ratio * contentHeight;
+    applyZoomAtClientY(clientY);
+    return;
+  }
+  applyZoomAtClientY(payload);
 };
 
 const zoomStyle = computed(() => ({
   height: `${zoomScale.value * 100}%`,
-  transform: `translateY(${zoomTranslatePx.value}px)`,
+  top: `${zoomTopPx.value}px`,
 }));
 
+const zoomTransitionStyle = computed(() =>
+  isScrolling.value
+    ? { transition: 'none' }
+    : {
+        transitionProperty: 'transform, height, top',
+        transitionDuration: '800ms',
+        transitionTimingFunction: 'ease-out',
+      },
+);
+
 const isZoomed = computed(() => zoomScale.value > 1.01);
+watch(isZoomed, (value) => {
+  setZoomed(value);
+});
 
 const handleWheel = (event) => {
-  if (autoZooming.value) {
-    return;
-  }
   if (event.ctrlKey) {
     event.preventDefault();
     if (event.deltaY < 0 && !isZoomed.value) {
@@ -196,7 +275,7 @@ const handleWheel = (event) => {
     return;
   }
   event.preventDefault();
-  zoomTranslatePx.value -= event.deltaY;
+  zoomTopPx.value -= event.deltaY;
 };
 </script>
 
@@ -208,9 +287,10 @@ const handleWheel = (event) => {
 }
 
 .timeline-zoom {
+  position: relative;
   width: 100%;
   height: 100%;
   transform-origin: 50% 0%;
-  will-change: transform, height;
+  will-change: transform, height, top;
 }
 </style>

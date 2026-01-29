@@ -4,57 +4,26 @@
     :style="mergedStyle"
     data-visit="true"
     :data-segment-id="segmentId || null"
-    :class="isZooming ? 'opacity-20' : 'opacity-50'"
   >
-    <div class="bottom element opacity-25" v-if="!isContinuation"></div>
     <div
-      class="opacity-80 w-full h-full front overflow-hidden"
-      :class="[
-        isHighlighted
-          ? 'border-[var(--highlight-color)] is-highlighed'
-          : 'border-primary bg-[rgba(50,50,50,1)]',
-        {
-          'border-t-[0.5px]': !isZooming && isLastSegment && !isHighlighted,
-          'border-t-[2px]': !isZooming && isLastSegment && isHighlighted,
-          'border-b-[0.5px]': !isZooming && !isContinuation && !isHighlighted,
-          'border-b-[2px]': !isZooming && !isContinuation && isHighlighted,
-          'border-x-[0.5px]': !isZooming && !isHighlighted,
-          'border-x-[2px]': !isZooming && isHighlighted,
-        },
-      ]"
+      class="bottom element opacity-25 rounded-[2px]"
+      v-if="!isContinuation"
+    ></div>
+    <div class="opacity-95 w-full h-full front overflow-hidden">
+      <div :style="frontStyle" class="relative w-[66vh] h-full"></div>
+    </div>
+    <div
+      class="top element overflow-hidden opacity-50 rounded-[2px]"
+      v-show="isLastSegment"
     >
       <div
         :style="frontStyle"
-        class="w-[75vw] h-[80vh] transition-opacity duration-500 ease-out"
-        :class="isZooming ? 'opacity-0' : 'opacity-100'"
+        class="relative w-[66vh] h-full opacity-50"
       ></div>
     </div>
     <div
-      class="top element relative overflow-hidden transition-opacity duration-500 ease-out"
-      :style="topStyle"
-      :class="[
-        isHighlighted
-          ? 'border-[var(--highlight-color)]  border-y-[2px] border-x-[4px] is-highlighed'
-          : 'border-primary border-[0.5px]',
-      ]"
-      v-show="isLastSegment"
-    ></div>
-    <div
-      class="side element opacity-50"
-      :class="[
-        isHighlighted
-          ? 'border-[var(--highlight-color)] is-highlighed'
-          : 'border-primary',
-        {
-          'border-t-[0.5px]': !isZooming && isLastSegment && !isHighlighted,
-          'border-b-[2px]': !isZooming && !isContinuation && !isHighlighted,
-          'border-t-[0.5px]': !isZooming && isLastSegment && isHighlighted,
-          'border-b-[2px]': !isZooming && !isContinuation && isHighlighted,
-          'border-x-[0.5px]': !isZooming && !isHighlighted,
-          'border-x-[2px]': !isZooming && isHighlighted,
-        },
-      ]"
-      v-if="!isZooming"
+      class="side element opacity-50 border-primary"
+      :class="[isHighlighted ? 'bg-[lime]' : 'bg-gray-500']"
     ></div>
   </article>
 </template>
@@ -89,10 +58,6 @@ const props = defineProps({
     default: null,
   },
 });
-
-import { useZoomState } from '../timeline/store/zoomState';
-
-const { isZooming } = useZoomState();
 
 const route = useRoute();
 const isHighlighted = computed(
@@ -171,21 +136,16 @@ onBeforeMount(() => {
 
 const frontStyle = computed(() => {
   const { linear } = gradientsForId(props.id);
-  return {
-    backgroundImage: `${linear}`,
-    backgroundAttachment: 'fixed',
-    transform: `translateX(-${props.style.left})`,
-  };
-});
-
-const topStyle = computed(() => {
-  const { radial } = gradientsForId(props.id);
-  return {
-    backgroundPositionY: '-10%',
-    backgroundSize: '80vw auto',
-    backgroundRepeat: 'no-repeat',
-    backgroundImage: `${radial}`,
-  };
+  const percentageLeft = parseFloat(props.style.left);
+  const percentageWidth = parseFloat(props.style.width);
+  return isHighlighted.value
+    ? { background: 'lime' }
+    : {
+        backgroundImage: `${linear}`,
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        left: `-${percentageLeft * (100 / percentageWidth)}%`,
+      };
 });
 
 const mergedStyle = computed(() => ({
@@ -214,7 +174,6 @@ const mergedStyle = computed(() => ({
 .top {
   position: absolute;
   top: 0;
-  left: -2px;
   background: #4c4c4c;
   width: calc(100% + 2px);
   height: var(--depth);
@@ -242,6 +201,5 @@ const mergedStyle = computed(() => ({
   height: 100%;
   transform: skewY(var(--side-angle)) translateX(100%);
   transform-origin: right top;
-  background: #242424;
 }
 </style>

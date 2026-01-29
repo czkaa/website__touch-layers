@@ -1,3 +1,3 @@
 <template>
-  <PageHome />
+  <PageScreen />
 </template>

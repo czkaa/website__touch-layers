@@ -1,9 +1,9 @@
 <template>
-  <h1 class="w-full max-w-custom mx-auto mt-sm">
+  <h1 class="w-full max-w-custom mx-auto mt-xs z-1">
     <span class="hidden">Your presence leaves traces</span>
     <img
       :src="size === 'sm' ? '/title.svg' : '/title-xs.svg'"
-      class="mr-7 ml-20 filter blur-custom"
+      class="w-[75%] filter blur-custom ml-auto mr-sm mb-sm"
     />
   </h1>
 </template>

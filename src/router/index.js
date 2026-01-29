@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import Index from '../views/Index.vue';
+import Screen from '../views/Screen.vue';
 import Visitor from '../views/Visitor.vue';
 
 const router = createRouter({
@@ -7,8 +7,8 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'index',
-      component: Index,
+      name: 'screen',
+      component: Screen,
     },
     {
       path: '/visitor',

@@ -1,37 +1,49 @@
 <template>
   <article
-    class="font-geist-mono border-b border-primary pb-xs mb-xs text-xs"
-    :class="{ 'text-highlight': isOnline }"
+    class="font-geist-mono pb-xs text-xs"
+    :class="{ 'text-highlight': isCurrent }"
   >
-    <header class="flex items-center justify-between gap-xs">
+    <header class="flex items-center justify-between gap-xs"></header>
+
+    <div class="mt-xs grid grid-cols-2 gap-x-sm gap-y-1">
       <div class="flex items-center gap-xs">
         <span
           class="w-3 h-3 border rounded-full inline-block"
           :class="[
-            isOnline ? 'border-highlight' : 'border-primary',
-            { 'bg-highlight ': isOnline },
+            isCurrent ? 'border-highlight ' : 'border-primary',
+            isOnline ? 'bg-current' : '',
           ]"
         />
 
-        <span>User Nr.{{ index + 1 }}</span>
+        <span>User Nr.{{ index + 1 }}:</span>
+        <span>{{ statusLabel }}</span>
       </div>
-      <span>{{ statusLabel }}</span>
-    </header>
-    <div class="mt-xs grid grid-cols-2 gap-x-sm gap-y-1">
-      <span>Device</span>
-      <span class="text-right">{{ deviceLabel }}</span>
-      <span>Browser</span>
-      <span class="text-right">{{ browserLabel }}</span>
-      <span>Screen</span>
-      <span class="text-right">{{ meta.screen ?? '—' }}</span>
-      <span>Language</span>
-      <span class="text-right">{{ meta.language ?? '—' }}</span>
-      <span>Timezone</span>
-      <span class="text-right">{{ meta.timezone ?? '—' }}</span>
-      <span>Time on site</span>
-      <span class="text-right">{{ durationLabel }}</span>
-      <span>Entered</span>
-      <span class="text-right">{{ enteredLabel }}</span>
+
+      <div>
+        <span>Device:</span> <span class="text-right">{{ deviceLabel }}</span>
+      </div>
+      <div>
+        <span>Browser:</span> <span class="text-right">{{ browserLabel }}</span>
+      </div>
+      <div>
+        <span>Screen: </span>
+        <span class="text-right">{{ meta.screen ?? '—' }}</span>
+      </div>
+      <div>
+        <span>Language: </span>
+        <span class="text-right">{{ meta.language ?? '—' }}</span>
+      </div>
+      <div>
+        <span>Timezone: </span>
+        <span class="text-right">{{ meta.timezone ?? '—' }}</span>
+      </div>
+      <div>
+        <span>Time on site: </span>
+        <span class="text-right">{{ durationLabel }}</span>
+      </div>
+      <div>
+        <span>Entered:</span> <span class="text-right">{{ enteredLabel }}</span>
+      </div>
     </div>
   </article>
 </template>
@@ -51,6 +63,10 @@ const props = defineProps({
   index: {
     type: Number,
     required: true,
+  },
+  isCurrent: {
+    type: Boolean,
+    default: false,
   },
 });
 

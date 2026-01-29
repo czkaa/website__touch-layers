@@ -11,6 +11,32 @@ const toRange = (range) => {
 // Sort ranges by start time.
 const sortByStart = (a, b) => a.startMs - b.startMs;
 
+const itemCache = new Map();
+
+const sameStyle = (a, b) =>
+  a?.bottom === b?.bottom &&
+  a?.height === b?.height &&
+  a?.left === b?.left &&
+  a?.width === b?.width;
+
+const sameItem = (a, b) =>
+  a?.type === b?.type &&
+  a?.visitId === b?.visitId &&
+  a?.segStart === b?.segStart &&
+  a?.segEnd === b?.segEnd &&
+  a?.isContinuation === b?.isContinuation &&
+  a?.isLastSegment === b?.isLastSegment &&
+  sameStyle(a?.style, b?.style);
+
+const reuseItem = (item) => {
+  const cached = itemCache.get(item.id);
+  if (cached && sameItem(cached, item)) {
+    return cached;
+  }
+  itemCache.set(item.id, item);
+  return item;
+};
+
 // True if two ranges overlap (open interval).
 const overlaps = (startA, endA, startB, endB) => startA < endB && endA > startB;
 
@@ -199,7 +225,9 @@ export const buildTimelineLayout = ({ visits, timeSlots, nowMs }) => {
   const items = [
     ...segments.map((segment) => ({ ...segment, type: 'visit' })),
     ...noVisits.map((gap) => ({ ...gap, type: 'gap' })),
-  ].sort((a, b) => (a.segStart ?? 0) - (b.segStart ?? 0));
+  ]
+    .map((item) => reuseItem(item))
+    .sort((a, b) => (a.segStart ?? 0) - (b.segStart ?? 0));
 
   return { items };
 };

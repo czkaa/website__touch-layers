@@ -1,4 +1,6 @@
 <template>
+  <SnippetsTitle class="fixed max-w-custom mx-auto left-1/2 -translate-x-1/2" />
+
   <router-view v-slot="{ Component }">
     <transition name="fade" mode="out-in">
       <component
@@ -12,7 +14,6 @@
 
 <script setup>
 import { useRoute } from 'vue-router';
-import { ref } from 'vue';
 
 const route = useRoute();
 </script>
@@ -26,7 +27,7 @@ body {
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.5s;
+  transition: opacity 0.4s;
 }
 .fade-enter-from,
 .fade-leave-to {

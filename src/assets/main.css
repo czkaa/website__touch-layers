@@ -5,7 +5,7 @@
 
 
 :root {
-  --primary: grey;
+  --primary: rgb(99, 99, 99);
   --secondary: black;
   --depth: 40px;
 }
@@ -20,7 +20,7 @@
 }
 
 @font-face {
-  font-family: "Geist-Black";
+  font-family: "Geist";
   src: url("fonts/Geist-Black.otf") format("opentype");
   font-weight: 900;
   font-style: normal;

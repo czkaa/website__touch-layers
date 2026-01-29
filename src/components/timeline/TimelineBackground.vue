@@ -1,5 +1,5 @@
 <template>
-  <div class="timeline-hours w-full flex flex-col-reverse -z-10 relative">
+  <div class="timeline-hours w-full flex flex-col-reverse -z-50 relative pb-1">
     <template v-if="hourBlocks">
       <TimelineBackgroundHour
         v-for="hour in hourBlocks"
@@ -9,8 +9,14 @@
       />
     </template>
 
-    <div class="absolute w-full h-full top-0 left-0 px-xs flex justify-between">
-      <TimeLineRandomVertical v-for="n in 8" :key="n" />
+    <div
+      class="absolute w-full h-full top-0 left-0 px-outer-2 flex justify-between"
+    >
+      <TimeLineRandomVertical
+        v-for="n in 6"
+        :key="n"
+        :class="{ 'opacity-0': n === 1 || n === 6 }"
+      />
     </div>
   </div>
 </template>
@@ -69,7 +75,7 @@ const hourBlocks = computed(() => {
       hour.dateKey !== lastDateKey
         ? new Date(hour.dateKey).toLocaleDateString('de-DE', {
             day: '2-digit',
-            month: '2-digit',
+            month: 'numeric',
           })
         : '';
     lastDateKey = hour.dateKey;
@@ -99,5 +105,8 @@ const hourBlocks = computed(() => {
   inset: 0;
   pointer-events: none;
   z-index: 0;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
 }
 </style>

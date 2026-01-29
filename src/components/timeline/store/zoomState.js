@@ -1,13 +1,18 @@
 import { ref } from 'vue';
 
 const isZooming = ref(false);
+const isZoomed = ref(false);
 let timer = null;
 
 const setZooming = (value) => {
   isZooming.value = value;
 };
 
-const setZoomingFor = (ms = 1000) => {
+const setZoomed = (value) => {
+  isZoomed.value = value;
+};
+
+const setZoomingFor = () => {
   isZooming.value = true;
   if (timer) {
     clearTimeout(timer);
@@ -15,11 +20,13 @@ const setZoomingFor = (ms = 1000) => {
   timer = setTimeout(() => {
     isZooming.value = false;
     timer = null;
-  }, ms);
+  }, 1200);
 };
 
 export const useZoomState = () => ({
   isZooming,
+  isZoomed,
   setZooming,
+  setZoomed,
   setZoomingFor,
 });

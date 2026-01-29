@@ -16,11 +16,12 @@ module.exports = {
   theme: {
     fontFamily: {
       'geist-mono': ['Geist-Mono-Light', 'monospace'],
+      geist: ['Geist', 'sans-serif'],
     },
     fontSize: {
       'root-screen': '1.75vh',
       'root-desktop': '1.75vh',
-      'root-mobile': '1.5vh',
+      'root-mobile': '1.75vh',
 
       lg: [
         '6rem', // 32
@@ -69,6 +70,10 @@ module.exports = {
         sm: '1rem',
         md: '2rem',
         lg: '4rem',
+        outer: '0.5rem',
+        'outer-1/2': '0.25rem',
+        'outer-2': '1rem',
+        'outer-4': '4rem',
         depth: 'var(--depth)',
       },
       borderRadius: {},
@@ -79,7 +84,7 @@ module.exports = {
         custom: '66vh',
       },
       blur: {
-        custom: '2px',
+        custom: '0.2rem',
       },
       colors: {
         primary: 'var(--primary)',
