@@ -1,12 +1,14 @@
 <template>
-  <SnippetsTitle class="fixed max-w-custom mx-auto left-1/2 -translate-x-1/2" />
+  <SnippetsTitle
+    class="fixed max-w-custom mx-auto top-0 left-1/2 -translate-x-1/2"
+  />
 
   <router-view v-slot="{ Component }">
     <transition name="fade" mode="out-in">
       <component
         :is="Component"
         :key="route.path"
-        class="max-w-custom mx-auto min-h-frame-h max-h-full h-fit bg-secondary text-primary"
+        class="max-w-custom mx-auto min-h-frame-h max-h-full h-fit text-primary text-md"
       />
     </transition>
   </router-view>
@@ -21,13 +23,13 @@ const route = useRoute();
 <style>
 html,
 body {
-  @apply text-root-desktop md:text-root-mobile lg:text-root-screen [font-weight:300] bg-secondary;
+  @apply text-root-desktop md:text-root-mobile lg:text-root-screen [font-weight:300] bg-secondary font-geist;
   color: var(--color-primary);
 }
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.4s;
+  transition: opacity 0.3s;
 }
 .fade-enter-from,
 .fade-leave-to {

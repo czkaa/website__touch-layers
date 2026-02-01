@@ -2,22 +2,19 @@
   <article
     class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-custom mx-auto h-fit bg-secondary overflow-y-auto border-t border-primary px-xs"
   >
-    <div class="absolute top-xs right-xs text-xs">
-      <span>({{ onlineCount }})</span>
-    </div>
     <LayoutListItem
       v-if="currentVisitor"
       :visitor="currentVisitor"
       :now="now"
+      :currentlyOnline="onlineCount"
       :index="currentIndex"
-      :is-current="true"
+      :isCurrent="true"
     />
   </article>
 </template>
 <script setup>
 import { computed, onMounted } from 'vue';
 import { useVisitorSocket } from '../timeline/store/visitorSocket';
-import LayoutListItem from './LayoutListItem.vue';
 
 const props = defineProps({
   currentId: {

@@ -53,15 +53,18 @@ const getClientMeta = () => {
     : /Mobi|Android|iPhone/i.test(ua)
       ? 'mobile'
       : 'desktop';
-  const browser = /Edg/i.test(ua)
+  const browser = /Edg/i.test(ua) || /EdgiOS/i.test(ua)
     ? 'Edge'
-    : /Chrome/i.test(ua) && !/Edg|OPR|Brave/i.test(ua)
-      ? 'Chrome'
-      : /Firefox/i.test(ua)
+    : /OPR/i.test(ua)
+      ? 'Opera'
+      : /FxiOS/i.test(ua) || /Firefox/i.test(ua)
         ? 'Firefox'
-        : /Safari/i.test(ua) && !/Chrome/i.test(ua)
-          ? 'Safari'
-          : 'Other';
+        : /CriOS/i.test(ua) || (/Chrome/i.test(ua) && !/Edg|OPR|Brave/i.test(ua))
+          ? 'Chrome'
+          : /Safari/i.test(ua) &&
+              !/Chrome|CriOS|FxiOS|Edg|EdgiOS|OPR/i.test(ua)
+            ? 'Safari'
+            : 'Other';
   const screenValue =
     typeof window !== 'undefined' && window.screen
       ? `${window.screen.width}x${window.screen.height}`

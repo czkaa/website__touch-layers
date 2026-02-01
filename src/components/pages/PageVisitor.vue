@@ -1,25 +1,42 @@
 <template>
-  <main class="w-frame-w h-frame-h overflow-hidden">
+  <main class="w-frame-w h-frame-h overflow-hidden relative">
     <TimelineStage :highlight-visit-id="currentId" />
 
     <transition name="slide-up">
-      <LayoutOverlayFingerprint
+      <SnippetsFingerprint
         v-if="showOverlayFingerprint"
+        :currentId="currentId"
+      />
+    </transition>
+
+    <transition name="slide-up">
+      <LayoutOverlayInfo
+        v-if="showOverlayInfo && isOpenNow && !isInactive"
         :current-id="currentId"
       />
     </transition>
 
     <transition name="slide-up">
-      <LayoutOverlayInfo v-if="showOverlayInfo" :current-id="currentId" />
+      <LayoutOverlayClosed
+        v-if="!isOpenNow && !isInactive"
+        :time-slots="timeSlots"
+      />
     </transition>
 
-    <button
-      class="fixed top-xs right-outer-2 bg-primary text-secondary w-16 h-16 rounded-full flex flex-col justify-center items-center text-[90px] p-xs transition-transform duration-300 blur-custom z-50"
-      :class="{ 'rotate-45': showOverlayInfo }"
-      @click="showOverlayInfo = !showOverlayInfo"
-    >
-      <img src="/plus.svg" class="w-full h-full" />
-    </button>
+    <transition name="slide-up">
+      <LayoutOverlayInactive v-if="isInactive" @resume="resumeSession" />
+    </transition>
+
+    <transition name="fade">
+      <button
+        v-if="isOpenNow && !isInactive"
+        class="fixed top-xs right-[calc(50vw-33vh)] transform -translate-x-1/2 bg-highlight w-16 h-16 rounded-full flex flex-col justify-center items-center p-xs transition-transform duration-300 blur-custom z-50"
+        :class="{ 'rotate-45': showOverlayInfo }"
+        @click="showOverlayInfo = !showOverlayInfo"
+      >
+        <img src="/plus.svg" class="w-full h-full" />
+      </button>
+    </transition>
   </main>
 </template>
 
@@ -27,58 +44,126 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import TimelineStage from '../timeline/TimelineStage.vue';
 import { useVisitorSocket } from '../timeline/store/visitorSocket';
-import LayoutOverlayFingerprint from '../layout/LayoutOverlayFingerprint.vue';
 import { useZoomState } from '../timeline/store/zoomState';
+import SnippetsFingerprint from '../snippets/SnippetsFingerprint.vue';
+import LayoutOverlayClosed from '../layout/LayoutOverlayClosed.vue';
+import LayoutOverlayInactive from '../layout/LayoutOverlayInactive.vue';
+import LayoutOverlayInfo from '../layout/LayoutOverlayInfo.vue';
+import { timeSlots } from '../timeline/store/visits';
 
-const { visitors, status, now, connect, sendEnter, sendLeave, getSessionId } =
-  useVisitorSocket();
+const {
+  visitors,
+  status,
+  now,
+  connect,
+  disconnect,
+  sendEnter,
+  sendLeave,
+  getSessionId,
+} = useVisitorSocket();
 
 const currentId = ref('');
 const showOverlayInfo = ref(false);
 const { isZoomed } = useZoomState();
 const showOverlayFingerprint = computed(() => isZoomed.value);
-const isActive = ref(true);
+const isInactive = ref(false);
+let inactivityTimer = null;
+const hasOpeningTimes = computed(() => timeSlots.length > 0);
+const isOpenNow = computed(() => {
+  if (!hasOpeningTimes.value) {
+    return false;
+  }
+  const nowValue = now.value;
+  return timeSlots.some((slot) => {
+    const start = new Date(slot.start).getTime();
+    const end = new Date(slot.end).getTime();
+    if (!Number.isFinite(start) || !Number.isFinite(end)) {
+      return false;
+    }
+    return nowValue >= start && nowValue <= end;
+  });
+});
 
 onMounted(() => {
   connect();
   const entered = sendEnter();
   currentId.value = entered?.id || getSessionId() || '';
+  resetInactivityTimer();
+
+  const handleActivity = () => {
+    if (isInactive.value) {
+      return;
+    }
+    resetInactivityTimer();
+  };
 
   const handleVisibility = () => {
     if (document.visibilityState === 'hidden') {
-      if (isActive.value) {
-        isActive.value = false;
-        sendLeave();
-      }
+      setInactive();
       return;
     }
-    if (!isActive.value) {
-      isActive.value = true;
-      connect();
-      const reentered = sendEnter();
-      currentId.value = reentered?.id || getSessionId() || '';
+    if (isInactive.value) {
+      resumeSession();
     }
   };
 
   const handlePageHide = () => {
-    if (isActive.value) {
-      isActive.value = false;
-      sendLeave();
-    }
+    setInactive();
   };
 
+  window.addEventListener('mousemove', handleActivity, { passive: true });
+  window.addEventListener('touchstart', handleActivity, { passive: true });
+  window.addEventListener('keydown', handleActivity);
+  window.addEventListener('scroll', handleActivity, { passive: true });
   document.addEventListener('visibilitychange', handleVisibility);
   window.addEventListener('pagehide', handlePageHide);
 
   onBeforeUnmount(() => {
+    window.removeEventListener('mousemove', handleActivity);
+    window.removeEventListener('touchstart', handleActivity);
+    window.removeEventListener('keydown', handleActivity);
+    window.removeEventListener('scroll', handleActivity);
     document.removeEventListener('visibilitychange', handleVisibility);
     window.removeEventListener('pagehide', handlePageHide);
   });
 });
 
 onBeforeUnmount(() => {
-  if (isActive.value) {
+  clearInactivityTimer();
+  if (!isInactive.value) {
     sendLeave();
   }
 });
+
+const clearInactivityTimer = () => {
+  if (inactivityTimer) {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = null;
+  }
+};
+
+const resetInactivityTimer = () => {
+  clearInactivityTimer();
+  inactivityTimer = setTimeout(() => {
+    setInactive();
+  }, 60 * 1000);
+};
+
+const setInactive = () => {
+  if (isInactive.value) {
+    return;
+  }
+  isInactive.value = true;
+  clearInactivityTimer();
+  sendLeave();
+  disconnect();
+};
+
+const resumeSession = () => {
+  isInactive.value = false;
+  connect();
+  const reentered = sendEnter();
+  currentId.value = reentered?.id || getSessionId() || '';
+  resetInactivityTimer();
+};
 </script>

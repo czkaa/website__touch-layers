@@ -69,6 +69,10 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  zoomRequest: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -144,9 +148,9 @@ const logClientY = (targetId, label) => {
   }
   const topPct = bottomPct + heightPct;
   const bottomPx = (topPct * window.innerHeight) / 100;
-  const clientY = window.innerHeight - bottomPx - 3;
-  console.log(label, clientY);
-  emit('select', clientY);
+
+  const clientY = window.innerHeight - bottomPx;
+
   return true;
 };
 
@@ -182,6 +186,18 @@ watch(
     }
   },
   { immediate: true },
+);
+
+watch(
+  () => props.zoomRequest,
+  async () => {
+    if (route.name !== 'visitor') {
+      return;
+    }
+    console.log('zoomRequest changed');
+    await nextTick();
+    logClientY(props.highlightVisitId, 'visitor clientY');
+  },
 );
 </script>
 

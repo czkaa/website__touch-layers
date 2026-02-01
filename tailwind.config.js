@@ -34,7 +34,7 @@ module.exports = {
         '1.5rem', // 20
         {
           lineHeight: '1.1', // 26
-          letterSpacing: '-0.01em',
+          letterSpacing: '-0.001em',
         },
       ],
       sm: [
@@ -73,7 +73,7 @@ module.exports = {
         outer: '0.5rem',
         'outer-1/2': '0.25rem',
         'outer-2': '1rem',
-        'outer-4': '4rem',
+        'outer-4': '2rem',
         depth: 'var(--depth)',
       },
       borderRadius: {},

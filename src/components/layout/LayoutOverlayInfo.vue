@@ -1,18 +1,11 @@
 <template>
-  <article
-    class="fixed bottom-[1px] left-1/2 -translate-x-1/2 w-full max-w-custom mx-auto h-frame-h bg-secondary overflow-y-auto border-t border-primary"
-  >
-    <SnippetsTitle size="xs" />
-    <div class="p-sm">
-      <p class="border-b border-primary pb-sm mb-sm">Lorem Ipsum</p>
-      <LayoutList :current-id="currentId" />
-    </div>
-  </article>
+  <LayoutOverlay>
+    <p class="border-b border-primary p-xs">Lorem Ipsum</p>
+    <LayoutList :current-id="currentId" />
+  </LayoutOverlay>
 </template>
-<script setup>
-import SnippetsTitle from '../snippets/SnippetsTitle.vue';
-import LayoutList from './LayoutList.vue';
 
+<script setup>
 defineProps({
   currentId: {
     type: String,
