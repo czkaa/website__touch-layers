@@ -12,12 +12,13 @@
       <transition name="fade">
         <div
           v-show="showVisits && !hideBeforeMount"
-          class="relative h-full timeline-inner ml-20 mr-[calc(var(--depth)*var(--side-depth-multiplier))]"
+          class="relative h-full timeline-inner ml-24 mr-[calc(var(--depth)*var(--side-depth-multiplier))]"
         >
           <template v-for="item in layout.items" :key="item.id">
             <TimelineVisit
               v-if="item.type === 'visit'"
               :id="item.visitId"
+              :fingerprint="item.visitFingerprint"
               :segment-id="item.id"
               :style="item.style"
               :is-continuation="item.isContinuation"
@@ -90,6 +91,7 @@ const liveVisits = computed(() => {
       id: visitor.id,
       start: visitor.enteredAt,
       end: visitor.leftAt || nowIso,
+      fingerprint: visitor.meta?.fingerprint || null,
     }));
 });
 
@@ -147,9 +149,9 @@ const logClientY = (targetId, label) => {
     return false;
   }
   const topPct = bottomPct + heightPct;
-  const bottomPx = (topPct * window.innerHeight) / 100;
-
-  const clientY = window.innerHeight - bottomPx;
+  const topPx = (topPct * window.innerHeight) / 100;
+  const clientY = window.innerHeight - topPx;
+  emit('select', clientY);
 
   return true;
 };
@@ -186,6 +188,16 @@ watch(
     }
   },
   { immediate: true },
+);
+
+watch(
+  () => props.highlightVisitId,
+  () => {
+    if (route.name !== 'visitor') {
+      return;
+    }
+    hasEmittedVisitor.value = false;
+  },
 );
 
 watch(

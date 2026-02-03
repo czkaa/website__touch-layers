@@ -5,9 +5,13 @@
 
 
 :root {
-  --primary: rgb(99, 99, 99);
+  --primary: rgb(133, 133, 133);
   --secondary: black;
-  --depth: 40px;
+  --depth: 3rem;
+  --top-angle: -60deg;
+  --side-angle: -30deg;
+  --side-depth-multiplier: 1.7;
+  --highlight-color: rgb(0, 255, 55);
 }
 
 
@@ -21,7 +25,7 @@
 
 @font-face {
   font-family: "Geist";
-  src: url("fonts/Geist-Thin.otf") format("opentype");
+  src: url("fonts/Geist-Regular.otf") format("opentype");
   font-weight: 900;
   font-style: normal;
   font-display: swap;

@@ -1,6 +1,6 @@
 <template>
-  <main class="w-frame-w h-frame-h overflow-hidden relative">
-    <TimelineStage :highlight-visit-id="currentId" />
+  <main class="h-frame-h overflow-hidden relative">
+    <TimelineStage ref="timelineStageRef" :highlight-visit-id="currentId" />
 
     <transition name="slide-up">
       <SnippetsFingerprint
@@ -30,7 +30,7 @@
     <transition name="fade">
       <button
         v-if="isOpenNow && !isInactive"
-        class="fixed top-xs right-[calc(50vw-33vh)] transform -translate-x-1/2 bg-highlight w-16 h-16 rounded-full flex flex-col justify-center items-center p-xs transition-transform duration-300 blur-custom z-50"
+        class="absolute top-xs right-xs bg-highlight w-16 h-16 rounded-full flex flex-col justify-center items-center p-xs transition-transform duration-300 blur-custom z-50"
         :class="{ 'rotate-45': showOverlayInfo }"
         @click="showOverlayInfo = !showOverlayInfo"
       >
@@ -41,7 +41,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import TimelineStage from '../timeline/TimelineStage.vue';
 import { useVisitorSocket } from '../timeline/store/visitorSocket';
 import { useZoomState } from '../timeline/store/zoomState';
@@ -60,14 +60,17 @@ const {
   sendEnter,
   sendLeave,
   getSessionId,
+  clearSessionId,
 } = useVisitorSocket();
 
+const INACTIVITY_TIMEOUT = 1000 * 60 * 3;
 const currentId = ref('');
 const showOverlayInfo = ref(false);
 const { isZoomed } = useZoomState();
 const showOverlayFingerprint = computed(() => isZoomed.value);
 const isInactive = ref(false);
 let inactivityTimer = null;
+const timelineStageRef = ref(null);
 const hasOpeningTimes = computed(() => timeSlots.length > 0);
 const isOpenNow = computed(() => {
   if (!hasOpeningTimes.value) {
@@ -85,46 +88,25 @@ const isOpenNow = computed(() => {
 });
 
 onMounted(() => {
-  connect();
+  connect({ reconnect: false });
   const entered = sendEnter();
   currentId.value = entered?.id || getSessionId() || '';
   resetInactivityTimer();
 
   const handleActivity = () => {
-    if (isInactive.value) {
-      return;
-    }
     resetInactivityTimer();
-  };
-
-  const handleVisibility = () => {
-    if (document.visibilityState === 'hidden') {
-      setInactive();
-      return;
-    }
-    if (isInactive.value) {
-      resumeSession();
-    }
-  };
-
-  const handlePageHide = () => {
-    setInactive();
   };
 
   window.addEventListener('mousemove', handleActivity, { passive: true });
   window.addEventListener('touchstart', handleActivity, { passive: true });
   window.addEventListener('keydown', handleActivity);
   window.addEventListener('scroll', handleActivity, { passive: true });
-  document.addEventListener('visibilitychange', handleVisibility);
-  window.addEventListener('pagehide', handlePageHide);
 
   onBeforeUnmount(() => {
     window.removeEventListener('mousemove', handleActivity);
     window.removeEventListener('touchstart', handleActivity);
     window.removeEventListener('keydown', handleActivity);
     window.removeEventListener('scroll', handleActivity);
-    document.removeEventListener('visibilitychange', handleVisibility);
-    window.removeEventListener('pagehide', handlePageHide);
   });
 });
 
@@ -132,6 +114,16 @@ onBeforeUnmount(() => {
   clearInactivityTimer();
   if (!isInactive.value) {
     sendLeave();
+  }
+  disconnect();
+});
+
+watch(status, (nextStatus) => {
+  if (isInactive.value) {
+    return;
+  }
+  if (nextStatus === 'closed' || nextStatus === 'error') {
+    setInactive();
   }
 });
 
@@ -146,7 +138,7 @@ const resetInactivityTimer = () => {
   clearInactivityTimer();
   inactivityTimer = setTimeout(() => {
     setInactive();
-  }, 60 * 1000);
+  }, INACTIVITY_TIMEOUT);
 };
 
 const setInactive = () => {
@@ -161,9 +153,11 @@ const setInactive = () => {
 
 const resumeSession = () => {
   isInactive.value = false;
-  connect();
-  const reentered = sendEnter();
-  currentId.value = reentered?.id || getSessionId() || '';
+  connect({ reconnect: false });
+  clearSessionId();
+  const entered = sendEnter();
+  currentId.value = entered?.id || getSessionId() || '';
   resetInactivityTimer();
+  timelineStageRef.value?.requestZoom?.();
 };
 </script>

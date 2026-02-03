@@ -66,7 +66,7 @@ const hourBlocks = computed(() => {
     const dateLabel =
       hour.dateKey !== lastDateKey
         ? new Date(hour.dateKey).toLocaleDateString('de-DE', {
-            day: '2-digit',
+            day: 'numeric',
             month: 'numeric',
           })
         : '';

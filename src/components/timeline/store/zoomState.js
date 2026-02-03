@@ -20,7 +20,7 @@ const setZoomingFor = () => {
   timer = setTimeout(() => {
     isZooming.value = false;
     timer = null;
-  }, 1200);
+  }, 1000);
 };
 
 export const useZoomState = () => ({

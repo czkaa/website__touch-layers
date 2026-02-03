@@ -8,7 +8,7 @@
       <component
         :is="Component"
         :key="route.path"
-        class="max-w-custom mx-auto min-h-frame-h max-h-full h-fit text-primary text-md"
+        class="max-w-custom mx-auto h-frame-h max-h-full h-fit text-primary text-md"
       />
     </transition>
   </router-view>

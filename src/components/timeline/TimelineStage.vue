@@ -4,7 +4,6 @@
     :class="{ 'is-zoomed': isZoomed }"
     ref="stageRef"
     @click.capture="handleStageClick"
-    @wheel.prevent.stop="handleWheel"
   >
     <div
       class="absolute w-full h-full top-0 left-0 px-outer-2 flex justify-between"
@@ -28,7 +27,7 @@
   <transition name="fade">
     <button
       v-if="route.name === 'visitor' && isZoomed"
-      class="fixed top-1/2 left-[100vw-66vh] -translate-y-1/2 w-12 h-12 p-xs -ml-xs"
+      class="absolute top-1/2 left-0.5 -translate-y-1/2 w-11 h-11 p-xs -ml-xs"
       @click.prevent="zoomRequest += 1"
     >
       <span class="w-full h-full inline-block bg-highlight rounded-full"></span>
@@ -63,8 +62,10 @@ const props = defineProps({
   },
 });
 
-const selectedId = ref(null);
 const ZOOM_LEVELS = [1, 100];
+const ZOOM_RESET_DELAY = 1000 * 60 * 1; // 1 minute
+
+const selectedId = ref(null);
 const zoomScale = ref(1);
 const zoomTopPx = ref(0);
 const focusedHourKey = ref(null);
@@ -77,14 +78,15 @@ let momentumRAF = null;
 const zoomRequest = ref(0);
 let zoomResetTimer = null;
 
+// Track if we're on iOS
+const isIOS = ref(false);
+
 const { setZoomingFor, setZoomed } = useZoomState();
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 // Momentum tracking
 const velocity = ref(0);
-const lastMoveTime = ref(0);
-const lastPosition = ref(0);
 
 const applyMomentum = () => {
   if (momentumRAF) {
@@ -101,8 +103,8 @@ const applyMomentum = () => {
     zoomTopPx.value += velocity.value;
     clampTopToBoundsImmediate();
 
-    // Decay velocity
-    velocity.value *= 0.95;
+    // Decay velocity - slightly faster decay on iOS for better feel
+    velocity.value *= isIOS.value ? 0.93 : 0.95;
 
     momentumRAF = requestAnimationFrame(tick);
   };
@@ -129,7 +131,7 @@ const scheduleScreenZoomReset = () => {
     if (isZoomed.value) {
       resetZoom();
     }
-  }, 20000);
+  }, ZOOM_RESET_DELAY);
 };
 
 const clearScreenZoomReset = () => {
@@ -139,54 +141,125 @@ const clearScreenZoomReset = () => {
   }
 };
 
+// Separate wheel handler to attach with proper options
+const wheelHandler = (event) => {
+  if (event.ctrlKey) {
+    event.preventDefault();
+    if (event.deltaY < 0 && !isZoomed.value) {
+      applyZoomAtClientY(event.clientY);
+    } else if (event.deltaY > 0 && isZoomed.value) {
+      resetZoom();
+    }
+    return;
+  }
+
+  if (!isZoomed.value) {
+    return;
+  }
+
+  if (!stageRef.value) {
+    return;
+  }
+
+  event.preventDefault();
+  stopMomentum();
+  isDragging.value = true;
+
+  zoomTopPx.value -= event.deltaY;
+  clampTopToBoundsImmediate();
+
+  setTimeout(() => {
+    isDragging.value = false;
+  }, 50);
+};
+
+// Touch event handlers for iOS compatibility
+let touchStartY = 0;
+let touchStartTime = 0;
+let lastTouchY = 0;
+let lastTouchTime = 0;
+let touchMoved = false;
+
+const handleTouchStart = (event) => {
+  if (!isZoomed.value) return;
+
+  stopMomentum();
+  isDragging.value = true;
+  touchMoved = false;
+
+  const touch = event.touches[0];
+  touchStartY = touch.clientY;
+  touchStartTime = Date.now();
+  lastTouchY = touch.clientY;
+  lastTouchTime = touchStartTime;
+
+  velocity.value = 0;
+};
+
+const handleTouchMove = (event) => {
+  if (!isZoomed.value || !isDragging.value) return;
+
+  // Prevent default to stop page scrolling when zoomed
+  event.preventDefault();
+  touchMoved = true;
+
+  const touch = event.touches[0];
+  const currentY = touch.clientY;
+  const currentTime = Date.now();
+
+  const deltaY = currentY - lastTouchY;
+
+  // Apply movement with sensitivity multiplier
+  zoomTopPx.value += deltaY * 1.5;
+
+  // Calculate velocity for momentum
+  const timeDelta = currentTime - lastTouchTime;
+  if (timeDelta > 0) {
+    velocity.value = (deltaY / timeDelta) * 16; // Normalize to ~60fps
+  }
+
+  lastTouchY = currentY;
+  lastTouchTime = currentTime;
+
+  clampTopToBoundsImmediate();
+};
+
+const handleTouchEnd = (event) => {
+  if (!isZoomed.value) return;
+
+  // Apply momentum if there's sufficient velocity
+  if (Math.abs(velocity.value) > 0.5) {
+    applyMomentum();
+  } else {
+    velocity.value = 0;
+    isDragging.value = false;
+  }
+
+  // Reset tracking
+  lastTouchY = 0;
+  lastTouchTime = 0;
+};
+
 const initGestures = (el) => {
+  // Detect iOS
+  isIOS.value =
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  // Add wheel listener with passive: false for proper prevention
+  el.addEventListener('wheel', wheelHandler, { passive: false });
+
+  // Add touch listeners with passive: false for iOS
+  // This is critical for newer iOS versions
+  el.addEventListener('touchstart', handleTouchStart, { passive: true });
+  el.addEventListener('touchmove', handleTouchMove, { passive: false });
+  el.addEventListener('touchend', handleTouchEnd, { passive: true });
+  el.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+
+  // Use gesture library primarily for pinch zoom
   gestureInstance.value = new Gesture(
     el,
     {
-      onDrag: (state) => {
-        if (!isZoomed.value) {
-          return;
-        }
-
-        state.event?.preventDefault?.();
-
-        // Stop any ongoing momentum
-        if (state.first) {
-          stopMomentum();
-          isDragging.value = true;
-        }
-
-        const deltaY = state.delta?.[1] ?? 0;
-        const movement = state.movement?.[1] ?? 0;
-
-        // Apply movement with HIGH sensitivity multiplier
-        zoomTopPx.value += deltaY * 3; // Increased from 1.5 to 3
-
-        // Track velocity for momentum
-        const now = Date.now();
-        if (lastMoveTime.value && now !== lastMoveTime.value) {
-          const timeDelta = now - lastMoveTime.value;
-          const positionDelta = movement - lastPosition.value;
-          velocity.value = (positionDelta / timeDelta) * 19;
-        }
-        lastMoveTime.value = now;
-        lastPosition.value = movement;
-
-        // Clamp immediately during drag
-        clampTopToBoundsImmediate();
-
-        // Apply momentum when drag ends
-        if (state.last) {
-          if (Math.abs(velocity.value) > 1) {
-            applyMomentum();
-          } else {
-            velocity.value = 0;
-            isDragging.value = false;
-          }
-          lastMoveTime.value = 0;
-          lastPosition.value = 0;
-        }
-      },
       onPinch: (state) => {
         if (!state?.first) {
           return;
@@ -207,24 +280,33 @@ const initGestures = (el) => {
     },
     {
       eventOptions: { passive: false },
-      drag: {
-        filterTaps: true,
-        pointer: { touch: true },
-        threshold: 3, // Lower threshold (was 5)
-      },
       pinch: {
         threshold: 0.1,
+        // Prevent pinch from interfering with native gestures on iOS
+        rubberband: false,
       },
     },
   );
 };
 
-onBeforeUnmount(() => {
-  stopMomentum();
+const cleanupGestures = () => {
+  if (stageRef.value) {
+    stageRef.value.removeEventListener('wheel', wheelHandler);
+    stageRef.value.removeEventListener('touchstart', handleTouchStart);
+    stageRef.value.removeEventListener('touchmove', handleTouchMove);
+    stageRef.value.removeEventListener('touchend', handleTouchEnd);
+    stageRef.value.removeEventListener('touchcancel', handleTouchEnd);
+  }
+
   if (gestureInstance.value) {
     gestureInstance.value.destroy();
     gestureInstance.value = null;
   }
+};
+
+onBeforeUnmount(() => {
+  stopMomentum();
+  cleanupGestures();
   if (zoomAnimationTimer) {
     clearTimeout(zoomAnimationTimer);
     zoomAnimationTimer = null;
@@ -355,6 +437,12 @@ const applyZoomAtClientY = async (clientY) => {
 };
 
 const handleStageClick = (event) => {
+  // Don't trigger zoom on click if we were dragging/scrolling
+  if (touchMoved) {
+    touchMoved = false;
+    return;
+  }
+
   if (isZoomed.value) {
     resetZoom();
     return;
@@ -380,6 +468,12 @@ const handleSelect = (payload) => {
   }
   applyZoomAtClientY(payload);
 };
+
+const requestZoom = () => {
+  zoomRequest.value += 1;
+};
+
+defineExpose({ requestZoom });
 
 const zoomStyle = computed(() => ({
   height: `${zoomScale.value * 100}%`,
@@ -411,48 +505,25 @@ watch(
     zoomRequest.value += 1;
   },
 );
-
-const handleWheel = (event) => {
-  if (event.ctrlKey) {
-    event.preventDefault();
-    if (event.deltaY < 0 && !isZoomed.value) {
-      applyZoomAtClientY(event.clientY);
-    } else if (event.deltaY > 0 && isZoomed.value) {
-      resetZoom();
-    }
-    return;
-  }
-
-  if (!isZoomed.value) {
-    return;
-  }
-
-  if (!stageRef.value) {
-    return;
-  }
-
-  event.preventDefault();
-  stopMomentum();
-  isDragging.value = true;
-
-  zoomTopPx.value -= event.deltaY;
-  clampTopToBoundsImmediate();
-
-  // Stop dragging state after a brief moment
-  setTimeout(() => {
-    isDragging.value = false;
-  }, 50);
-};
 </script>
 
 <style scoped>
 .timeline-stage {
   position: relative;
-  touch-action: none;
-  overscroll-behavior: none;
+  /* More specific touch-action for iOS */
+  touch-action: pan-x pinch-zoom;
+  overscroll-behavior: contain;
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
+  /* Prevent iOS bounce/rubber-banding */
+  -webkit-overflow-scrolling: auto;
+}
+
+/* When zoomed, we handle all touch ourselves */
+.timeline-stage.is-zoomed {
+  touch-action: none;
+  overflow: hidden;
 }
 
 .timeline-zoom {
@@ -463,5 +534,7 @@ const handleWheel = (event) => {
   will-change: transform;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  /* Improve iOS rendering */
+  -webkit-transform: translateZ(0);
 }
 </style>

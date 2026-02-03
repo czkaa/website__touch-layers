@@ -1,5 +1,5 @@
 <template>
-  <main class="w-frame-w h-frame-h overflow-hidden">
+  <main class="h-frame-h overflow-hidden">
     <TimelineStage :time-slots="timeSlots" />
   </main>
 </template>

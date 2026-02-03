@@ -38,16 +38,16 @@ module.exports = {
         },
       ],
       sm: [
-        '0.9rem', // 20
+        'max(0.5rem,14px)', // 20
         {
-          lineHeight: '1.15em', // 26
+          lineHeight: '1.25em', // 26
           letterSpacing: '0.05em',
         },
       ],
-      xs: [
-        '0.7rem', // 20
+      'sm-mono': [
+        'max(0.45rem,11.5px)', // 20
         {
-          lineHeight: '1.15em', // 26
+          lineHeight: '1.25em', // 26
           letterSpacing: '0.05em',
         },
       ],

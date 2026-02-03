@@ -7,7 +7,7 @@
         :index="visitors.length - index - 1"
         :is-current="visitor.id === currentId"
       />
-      <div class="w-full border-b border-primary mb-xs"></div>
+      <div class="w-full border-b border-primary"></div>
     </template>
   </section>
 </template>

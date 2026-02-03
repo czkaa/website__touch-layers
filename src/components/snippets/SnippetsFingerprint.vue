@@ -1,15 +1,17 @@
 <template>
   <article
-    class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-custom mx-auto h-fit bg-secondary overflow-y-auto border-t border-primary px-xs"
+    class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-custom mx-auto h-fit bg-secondary overflow-y-auto border-t border-primary px-outer-2"
   >
-    <LayoutListItem
-      v-if="currentVisitor"
-      :visitor="currentVisitor"
-      :now="now"
-      :currentlyOnline="onlineCount"
-      :index="currentIndex"
-      :isCurrent="true"
-    />
+    <div class="border-x border-primary">
+      <LayoutListItem
+        v-if="currentVisitor"
+        :visitor="currentVisitor"
+        :now="now"
+        :currentlyOnline="onlineCount"
+        :index="currentIndex"
+        :isCurrent="true"
+      />
+    </div>
   </article>
 </template>
 <script setup>

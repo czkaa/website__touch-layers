@@ -5,12 +5,18 @@
     data-visit="true"
     :data-segment-id="segmentId || null"
   >
-    <div class="bottom element opacity-25" v-if="!isContinuation"></div>
+    <div
+      class="bottom element opacity-25 rounded-[2px]"
+      v-if="!isContinuation"
+    ></div>
     <div class="opacity-95 w-full h-full front overflow-hidden">
       <div :style="frontStyle" class="relative h-full"></div>
     </div>
-    <div class="top element overflow-hidden opacity-50" v-show="isLastSegment">
-      <div :style="topStyle" class="relative h-full opacity-[70%]"></div>
+    <div
+      class="top element overflow-hidden opacity-50 rounded-[2px]"
+      v-show="isLastSegment"
+    >
+      <div :style="topStyle" class="relative h-full opacity-50"></div>
     </div>
     <div
       class="side element opacity-50 border-primary"
@@ -60,36 +66,36 @@ const isHighlighted = computed(
 );
 
 const palette = [
-  { hex: '#ff6666', family: 'red' },
-  { hex: '#ff8080', family: 'red' },
-  { hex: '#ff9933', family: 'orange' },
-  { hex: '#ffb34d', family: 'orange' },
-  { hex: '#ff66b3', family: 'pink' },
-  { hex: '#ff80cc', family: 'pink' },
-  { hex: '#ffff66', family: 'yellow' },
-  { hex: '#ffff80', family: 'yellow' },
-  { hex: '#b3ff66', family: 'yellow-green' },
-  { hex: '#ccff80', family: 'yellow-green' },
-  { hex: '#66ffcc', family: 'green' },
-  { hex: '#80ffd9', family: 'green' },
-  { hex: '#66ffcc', family: 'green' },
-  { hex: '#80ffd9', family: 'green' },
-  { hex: '#66ff99', family: 'green' },
-  { hex: '#80ffb3', family: 'green' },
-  { hex: '#66b3ff', family: 'cyan' },
-  { hex: '#80cfff', family: 'cyan' },
-  { hex: '#66ffff', family: 'cyan' },
-  { hex: '#80ffff', family: 'cyan' },
-  { hex: '#4d9eff', family: 'blue' },
-  { hex: '#66b3ff', family: 'blue' },
-  { hex: '#9966ff', family: 'purple' },
-  { hex: '#aa80ff', family: 'purple' },
-  { hex: '#9966ff', family: 'purple' },
-  { hex: '#aa80ff', family: 'purple' },
-  { hex: '#cc66ff', family: 'purple' },
-  { hex: '#d180ff', family: 'purple' },
-  { hex: '#ff66cc', family: 'pink' },
-  { hex: '#ff80d9', family: 'pink' },
+  '#4d9eff',
+  '#66b3ff',
+  '#ff66cc',
+  '#ff80d9',
+  '#66ff99',
+  '#80ffb3',
+  '#ffff66',
+  '#ffff80',
+  '#9966ff',
+  '#aa80ff',
+  '#66ffcc',
+  '#80ffd9',
+  '#ff9933',
+  '#ffb34d',
+  '#9966ff',
+  '#aa80ff',
+  '#ff6666',
+  '#ff8080',
+  '#66ffff',
+  '#80ffff',
+  '#cc66ff',
+  '#d180ff',
+  '#ff66b3',
+  '#ff80cc',
+  '#b3ff66',
+  '#ccff80',
+  '#66ffcc',
+  '#80ffd9',
+  '#66b3ff',
+  '#80cfff',
 ];
 
 const gradientsById = new Map();
@@ -100,6 +106,16 @@ const hashId = (id) => {
     hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
   }
   return hash;
+};
+
+const mulberry32 = (seed) => {
+  let t = seed >>> 0;
+  return () => {
+    t += 0x6d2b79f5;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
 };
 
 const buildGradients = (colors, seed) => {
@@ -129,20 +145,8 @@ const gradientsForId = (seedId) => {
   }
   const hash = hashId(seedId);
   const firstIndex = hash % palette.length;
-  const first = palette[firstIndex];
-  let second = null;
-  for (let step = 1; step <= palette.length; step += 1) {
-    const index = (firstIndex + ((hash >>> 5) + step) * 7) % palette.length;
-    const candidate = palette[index];
-    if (candidate.family !== first.family) {
-      second = candidate;
-      break;
-    }
-  }
-  if (!second) {
-    second = palette[(firstIndex + 1) % palette.length];
-  }
-  const colors = [first.hex, second.hex];
+  const secondIndex = (hash * 7 + 13) % palette.length;
+  const colors = [palette[firstIndex], palette[secondIndex]];
   const gradients = buildGradients(colors, hash);
   gradientsById.set(seedId, gradients);
   return gradients;
@@ -201,7 +205,6 @@ const mergedStyle = computed(() => ({
 .top {
   position: absolute;
   top: 0;
-  border-radius: 1px;
   background: #4c4c4c;
   width: 100%;
   height: var(--depth);
@@ -212,9 +215,9 @@ const mergedStyle = computed(() => ({
 .bottom {
   position: absolute;
   top: 100%;
-  border-radius: 1px;
+  left: -2px;
   background: #2d2d2d;
-  width: calc(100%);
+  width: calc(100% + 2px);
   height: var(--depth);
   transform: translateY(-100%) skewX(var(--top-angle));
   transform-origin: left bottom;
@@ -226,7 +229,7 @@ const mergedStyle = computed(() => ({
   top: 0;
   right: 0;
   width: calc(var(--depth) * var(--side-depth-multiplier));
-  height: calc(100% + 1px);
+  height: 100%;
   transform: skewY(var(--side-angle)) translateX(100%);
   transform-origin: right top;
 }

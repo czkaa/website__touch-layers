@@ -26,6 +26,7 @@ const sameItem = (a, b) =>
   a?.segEnd === b?.segEnd &&
   a?.isContinuation === b?.isContinuation &&
   a?.isLastSegment === b?.isLastSegment &&
+  a?.visitFingerprint === b?.visitFingerprint &&
   sameStyle(a?.style, b?.style);
 
 const reuseItem = (item) => {
@@ -149,6 +150,7 @@ const buildSegmentsForSlot = (slot, visits, nowMs) => {
       segments.push({
         id: `${visit.id}-${segStart}`,
         visitId: visit.id,
+        visitFingerprint: visit.fingerprint || null,
         segEnd,
         segStart,
         hourStartMs: new Date((segStart + segEnd) / 2).setMinutes(0, 0, 0),

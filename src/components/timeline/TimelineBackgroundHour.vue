@@ -13,7 +13,7 @@
       >
         {{ hour.dateLabel }}
       </span>
-      <span class="text-[max(0.5rem,11px)]" v-else>{{ hour.label }}</span>
+      <span class="text-sm-mono" v-else>{{ hour.label }}</span>
     </label>
 
     <transition name="fade">

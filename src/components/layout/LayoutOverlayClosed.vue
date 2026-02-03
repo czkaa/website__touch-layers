@@ -1,13 +1,13 @@
 <template>
   <LayoutOverlay>
-    <ul v-if="formattedSlots.length" class="space-y-xs px-xs">
+    <ul v-if="formattedSlots.length" class="space-y-xs p-xs">
       <p class="mb-md">
         The installation is currently dormant It exists only during these
         opening hours:
       </p>
 
       <li v-for="slot in formattedSlots" :key="slot.id">
-        <span class="w-5 h-5 rounded-full bg-primary inline-block"></span>
+        <span class="w-3 h-3 rounded-full bg-primary inline-block"></span>
         {{ slot.label }}
       </li>
     </ul>

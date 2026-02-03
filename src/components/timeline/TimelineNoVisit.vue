@@ -1,17 +1,17 @@
 <template>
   <div class="no-visit absolute pointer-events-none" :style="style">
     <div
-      class="absolute left-[0] w-1.5 h-full bg-pole rounded-b-[10rem] ml-5 -mt-1.5"
+      class="absolute left-[0] w-1.5 h-full bg-pole rounded-[10rem] ml-5 -mt-1.5"
     ></div>
     <div
-      class="absolute right-[0] w-1.5 h-full bg-pole rounded-b-[10rem] mr-1.5 -mt-1.5"
+      class="absolute right-[0] w-1.5 h-full bg-pole rounded-[10rem] mr-1.5 -mt-1.5"
     ></div>
 
     <div
-      class="absolute -top-depth left-[calc(var(--depth)*var(--side-depth-multiplier))] w-1.5 h-full bg-pole rounded-b-[10rem] ml-1.5 mt-1.5"
+      class="absolute -top-depth left-[calc(var(--depth)*var(--side-depth-multiplier))] w-1.5 h-full bg-pole rounded-[10rem] ml-1.5 mt-1.5"
     ></div>
     <div
-      class="absolute -top-depth right-[calc(var(--depth)/-1*var(--side-depth-multiplier))] w-1.5 h-full bg-pole rounded-b-[10rem] mr-5 mt-1.5"
+      class="absolute -top-depth right-[calc(var(--depth)/-1*var(--side-depth-multiplier))] w-1.5 h-full bg-pole rounded-[10rem] mr-5 mt-1.5"
     ></div>
   </div>
 </template>
